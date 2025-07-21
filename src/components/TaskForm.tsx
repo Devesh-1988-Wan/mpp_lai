@@ -8,16 +8,17 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon, Save, X } from "lucide-react";
 import { format } from "date-fns";
-import { Task, TaskStatus, TaskType } from "@/types/project";
+import { Task, TaskStatus, TaskType, CustomField } from "@/types/project";
 
 interface TaskFormProps {
   onSave: (task: Omit<Task, 'id'>) => void;
   onCancel: () => void;
   existingTasks: Task[];
   editTask?: Task;
+  customFields?: CustomField[];
 }
 
-export function TaskForm({ onSave, onCancel, existingTasks, editTask }: TaskFormProps) {
+export function TaskForm({ onSave, onCancel, existingTasks, editTask, customFields = [] }: TaskFormProps) {
   const [name, setName] = useState(editTask?.name || '');
   const [description, setDescription] = useState(editTask?.description || '');
   const [type, setType] = useState<TaskType>(editTask?.type || 'task');
@@ -26,6 +27,7 @@ export function TaskForm({ onSave, onCancel, existingTasks, editTask }: TaskForm
   const [endDate, setEndDate] = useState<Date>(editTask?.endDate || new Date());
   const [dependencies, setDependencies] = useState<string[]>(editTask?.dependencies || []);
   const [assignee, setAssignee] = useState(editTask?.assignee || '');
+  const [customFieldValues, setCustomFieldValues] = useState<Record<string, any>>(editTask?.customFields || {});
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,10 +45,18 @@ export function TaskForm({ onSave, onCancel, existingTasks, editTask }: TaskForm
       endDate,
       dependencies,
       assignee: assignee.trim(),
-      progress: editTask?.progress || 0
+      progress: editTask?.progress || 0,
+      customFields: customFieldValues
     };
 
     onSave(taskData);
+  };
+
+  const handleCustomFieldChange = (fieldId: string, value: any) => {
+    setCustomFieldValues(prev => ({
+      ...prev,
+      [fieldId]: value
+    }));
   };
 
   const availableDependencies = existingTasks.filter(task => task.id !== editTask?.id);
@@ -187,7 +197,86 @@ export function TaskForm({ onSave, onCancel, existingTasks, editTask }: TaskForm
               </SelectContent>
             </Select>
           </div>
-        )}
+          )}
+
+          {/* Custom Fields */}
+          {customFields.length > 0 && (
+            <div className="space-y-4 border-t pt-4">
+              <h3 className="font-medium">Custom Fields</h3>
+              {customFields.map((field) => (
+                <div key={field.id} className="space-y-2">
+                  <Label htmlFor={`custom-${field.id}`}>
+                    {field.name}
+                    {field.required && <span className="text-destructive ml-1">*</span>}
+                  </Label>
+                  
+                  {field.type === 'text' && (
+                    <Input
+                      id={`custom-${field.id}`}
+                      value={customFieldValues[field.id] || ''}
+                      onChange={(e) => handleCustomFieldChange(field.id, e.target.value)}
+                      placeholder={`Enter ${field.name.toLowerCase()}`}
+                      required={field.required}
+                    />
+                  )}
+                  
+                  {field.type === 'number' && (
+                    <Input
+                      id={`custom-${field.id}`}
+                      type="number"
+                      value={customFieldValues[field.id] || ''}
+                      onChange={(e) => handleCustomFieldChange(field.id, parseFloat(e.target.value) || '')}
+                      placeholder={`Enter ${field.name.toLowerCase()}`}
+                      required={field.required}
+                    />
+                  )}
+                  
+                  {field.type === 'select' && field.options && (
+                    <Select 
+                      value={customFieldValues[field.id] || ''} 
+                      onValueChange={(value) => handleCustomFieldChange(field.id, value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={`Select ${field.name.toLowerCase()}`} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {field.options.map((option) => (
+                          <SelectItem key={option} value={option}>
+                            {option}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  
+                  {field.type === 'boolean' && (
+                    <div className="flex items-center space-x-2">
+                      <input
+                        id={`custom-${field.id}`}
+                        type="checkbox"
+                        checked={customFieldValues[field.id] || false}
+                        onChange={(e) => handleCustomFieldChange(field.id, e.target.checked)}
+                        className="rounded border-input"
+                      />
+                      <Label htmlFor={`custom-${field.id}`} className="text-sm font-normal">
+                        Yes
+                      </Label>
+                    </div>
+                  )}
+                  
+                  {field.type === 'date' && (
+                    <Input
+                      id={`custom-${field.id}`}
+                      type="date"
+                      value={customFieldValues[field.id] || ''}
+                      onChange={(e) => handleCustomFieldChange(field.id, e.target.value)}
+                      required={field.required}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
 
         <div className="flex justify-end space-x-2 pt-4">
           <Button type="button" variant="outline" onClick={onCancel}>

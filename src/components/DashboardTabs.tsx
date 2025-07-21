@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
-import { Task } from "@/types/project";
+import { Task, CustomField } from "@/types/project";
 import { GanttChart } from "./GanttChart";
 import { ProjectReports } from "./ProjectReports";
 import { TaskFilters } from "./TaskFilters";
@@ -12,9 +12,10 @@ interface DashboardTabsProps {
   onEditTask: (task: Task) => void;
   onDeleteTask: (taskId: string) => void;
   onExportReport: () => void;
+  customFields?: CustomField[];
 }
 
-export function DashboardTabs({ tasks, onEditTask, onDeleteTask, onExportReport }: DashboardTabsProps) {
+export function DashboardTabs({ tasks, onEditTask, onDeleteTask, onExportReport, customFields = [] }: DashboardTabsProps) {
   const [filteredTasks, setFilteredTasks] = useState<Task[]>(tasks);
 
   // Update filtered tasks when tasks change
