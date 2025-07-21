@@ -5,22 +5,27 @@ type Project = Database['public']['Tables']['projects']['Row']
 type ProjectInsert = Database['public']['Tables']['projects']['Insert']
 type ProjectUpdate = Database['public']['Tables']['projects']['Update']
 
+// In-memory storage for demo projects when Supabase is not configured
+let demoProjects: any[] = [];
 export class ProjectService {
   // Get all projects for the current user
   static async getUserProjects() {
     if (!supabase) {
-      // Return sample data when Supabase is not configured
-      return [
-        {
-          id: '1',
-          name: 'Sample Project',
-          description: 'This is a sample project. Connect Supabase to store real data.',
-          status: 'active' as const,
-          createdDate: new Date('2024-01-01'),
-          lastModified: new Date(),
-          teamMembers: ['Demo User']
-        }
-      ];
+      // Initialize with sample data if empty
+      if (demoProjects.length === 0) {
+        demoProjects = [
+          {
+            id: '1',
+            name: 'Sample Project',
+            description: 'This is a sample project. Connect Supabase to store real data.',
+            status: 'active' as const,
+            createdDate: new Date('2024-01-01'),
+            lastModified: new Date(),
+            teamMembers: ['Demo User']
+          }
+        ];
+      }
+      return demoProjects;
     }
 
     const { data, error } = await supabase
@@ -39,44 +44,50 @@ export class ProjectService {
   // Get a specific project by ID
   static async getProject(id: string) {
     if (!supabase) {
-      // Return sample project data when Supabase is not configured
-      const sampleProjects = [
-        {
-          id: '1',
-          name: 'Sample Software Project',
-          description: 'A comprehensive software development project with multiple phases',
-          createdDate: new Date('2024-01-01'),
-          lastModified: new Date(),
-          status: 'active' as const,
-          customFields: [
-            {
-              id: 'cf1',
-              name: 'Priority',
-              type: 'select' as const,
-              required: true,
-              options: ['Low', 'Medium', 'High', 'Critical']
-            }
-          ],
-          teamMembers: ['Sarah Johnson', 'Alex Chen'],
-          tasks: [
-            {
-              id: '1',
-              name: 'Project Planning & Requirements',
-              description: 'Define project scope and gather requirements',
-              type: 'task' as const,
-              status: 'completed' as const,
-              startDate: new Date('2024-01-01'),
-              endDate: new Date('2024-01-07'),
-              dependencies: [],
-              assignee: 'Sarah Johnson',
-              progress: 100,
-              customFields: { 'cf1': 'High' }
-            }
-          ]
-        }
-      ];
+      // Look for project in demo storage
+      let project = demoProjects.find(p => p.id === id);
       
-      return sampleProjects.find(p => p.id === id) || null;
+      if (!project) {
+        // If not found and it's the sample project ID, create it
+        if (id === '1') {
+          project = {
+            id: '1',
+            name: 'Sample Software Project',
+            description: 'A comprehensive software development project with multiple phases',
+            createdDate: new Date('2024-01-01'),
+            lastModified: new Date(),
+            status: 'active' as const,
+            customFields: [
+              {
+                id: 'cf1',
+                name: 'Priority',
+                type: 'select' as const,
+                required: true,
+                options: ['Low', 'Medium', 'High', 'Critical']
+              }
+            ],
+            teamMembers: ['Sarah Johnson', 'Alex Chen'],
+            tasks: [
+              {
+                id: '1',
+                name: 'Project Planning & Requirements',
+                description: 'Define project scope and gather requirements',
+                type: 'task' as const,
+                status: 'completed' as const,
+                startDate: new Date('2024-01-01'),
+                endDate: new Date('2024-01-07'),
+                dependencies: [],
+                assignee: 'Sarah Johnson',
+                progress: 100,
+                customFields: { 'cf1': 'High' }
+              }
+            ]
+          };
+          demoProjects.push(project);
+        }
+      }
+      
+      return project || null;
     }
 
     const { data, error } = await supabase
@@ -96,7 +107,7 @@ export class ProjectService {
   // Create a new project
   static async createProject(project: ProjectInsert) {
     if (!supabase) {
-      // Return mock data when Supabase is not configured
+      // Create mock project and add to demo storage
       const mockProject = {
         id: Date.now().toString(),
         name: project.name,
@@ -108,6 +119,10 @@ export class ProjectService {
         tasks: [],
         customFields: []
       };
+      
+      // Add to demo storage
+      demoProjects.push(mockProject);
+      
       return mockProject;
     }
 
