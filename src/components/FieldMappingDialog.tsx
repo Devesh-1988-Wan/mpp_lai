@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Task } from "@/types/project";
+import { Task, CustomField } from "@/types/project";
 
 interface FieldMapping {
   csvColumn: string;
@@ -14,6 +14,8 @@ interface FieldMappingDialogProps {
   isOpen: boolean;
   onClose: () => void;
   csvHeaders: string[];
+  customFields?: CustomField[];
+  importMode?: 'create' | 'update' | 'delete';
   onConfirm: (mappings: FieldMapping[]) => void;
 }
 
@@ -54,16 +56,34 @@ const findBestMatch = (headers: string[], fieldName: string): string | null => {
   return null;
 };
 
-export function FieldMappingDialog({ isOpen, onClose, csvHeaders, onConfirm }: FieldMappingDialogProps) {
+export function FieldMappingDialog({ 
+  isOpen, 
+  onClose, 
+  csvHeaders, 
+  customFields = [], 
+  importMode = 'create',
+  onConfirm 
+}: FieldMappingDialogProps) {
   const [mappings, setMappings] = useState<FieldMapping[]>(() => {
-    // Auto-map fields based on common column names
-    return APP_FIELDS.map(appField => {
+    // Create mappings for standard fields
+    const standardMappings = APP_FIELDS.map(appField => {
       const csvColumn = findBestMatch(csvHeaders, appField.value);
       return {
         csvColumn: csvColumn || '',
         appField: appField.value
       };
     });
+    
+    // Create mappings for custom fields
+    const customMappings = customFields.map(customField => {
+      const csvColumn = findBestMatch(csvHeaders, customField.name.toLowerCase());
+      return {
+        csvColumn: csvColumn || '',
+        appField: `custom_${customField.id}`
+      };
+    });
+    
+    return [...standardMappings, ...customMappings];
   });
 
 
@@ -92,8 +112,26 @@ export function FieldMappingDialog({ isOpen, onClose, csvHeaders, onConfirm }: F
   const handleConfirm = () => {
     const validMappings = mappings.filter(m => m.csvColumn !== '');
     
-    // Check if required fields are mapped
-    const requiredFields = APP_FIELDS.filter(f => f.required).map(f => f.value);
+    if (importMode === 'delete') {
+      // For delete mode, only need task name
+      const nameMapping = validMappings.find(m => m.appField === 'name');
+      if (!nameMapping) {
+        alert('Please map the Task Name field for deletion');
+        return;
+      }
+      onConfirm([nameMapping]);
+      return;
+    }
+    
+    // Check if required fields are mapped for create/update modes
+    let requiredFields = APP_FIELDS.filter(f => f.required).map(f => f.value);
+    
+    // Add required custom fields
+    const requiredCustomFields = customFields
+      .filter(f => f.required)
+      .map(f => `custom_${f.id}`);
+    requiredFields = [...requiredFields, ...requiredCustomFields];
+    
     const mappedRequiredFields = validMappings
       .filter(m => requiredFields.includes(m.appField))
       .map(m => m.appField);
@@ -104,7 +142,14 @@ export function FieldMappingDialog({ isOpen, onClose, csvHeaders, onConfirm }: F
 
     if (missingRequired.length > 0) {
       const missingLabels = missingRequired
-        .map(field => APP_FIELDS.find(f => f.value === field)?.label)
+        .map(field => {
+          const standardField = APP_FIELDS.find(f => f.value === field);
+          if (standardField) return standardField.label;
+          
+          const customFieldId = field.replace('custom_', '');
+          const customField = customFields.find(f => f.id === customFieldId);
+          return customField?.name || field;
+        })
         .join(', ');
       alert(`Please map the following required fields: ${missingLabels}`);
       return;
@@ -122,35 +167,78 @@ export function FieldMappingDialog({ isOpen, onClose, csvHeaders, onConfirm }: F
         
         <div className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Map your CSV columns to the application fields. Required fields are marked with *.
+            {importMode === 'delete' 
+              ? 'Map the task name column to identify tasks for deletion.' 
+              : `Map your CSV columns to the application fields. Required fields are marked with *.`}
           </p>
           
           <div className="space-y-3">
-            {APP_FIELDS.map(appField => (
-              <div key={appField.value} className="grid grid-cols-2 gap-4 items-center">
-                <Label className="text-sm font-medium">
-                  {appField.label}
-                  {appField.required && <span className="text-destructive ml-1">*</span>}
-                </Label>
-                
-                <Select
-                  value={mappings.find(m => m.appField === appField.value)?.csvColumn || '__no_mapping__'}
-                  onValueChange={(value) => updateMapping(appField.value, value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select CSV column" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__no_mapping__">-- No mapping --</SelectItem>
-                    {getAvailableColumns(appField.value).map(header => (
-                      <SelectItem key={header} value={header}>
-                        {header}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            ))}
+            {/* Standard Fields */}
+            {APP_FIELDS.map(appField => {
+              // For delete mode, only show required fields (mainly task name)
+              if (importMode === 'delete' && !appField.required) return null;
+              
+              return (
+                <div key={appField.value} className="grid grid-cols-2 gap-4 items-center">
+                  <Label className="text-sm font-medium">
+                    {appField.label}
+                    {appField.required && <span className="text-destructive ml-1">*</span>}
+                  </Label>
+                  
+                  <Select
+                    value={mappings.find(m => m.appField === appField.value)?.csvColumn || '__no_mapping__'}
+                    onValueChange={(value) => updateMapping(appField.value, value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select CSV column" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__no_mapping__">-- No mapping --</SelectItem>
+                      {getAvailableColumns(appField.value).map(header => (
+                        <SelectItem key={header} value={header}>
+                          {header}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              );
+            })}
+            
+            {/* Custom Fields */}
+            {importMode !== 'delete' && customFields.length > 0 && (
+              <>
+                <div className="border-t pt-4">
+                  <h4 className="text-sm font-medium text-muted-foreground mb-3">Custom Fields</h4>
+                </div>
+                {customFields.map(customField => (
+                  <div key={customField.id} className="grid grid-cols-2 gap-4 items-center">
+                    <Label className="text-sm font-medium">
+                      {customField.name}
+                      {customField.required && <span className="text-destructive ml-1">*</span>}
+                      <span className="text-xs text-muted-foreground ml-1">({customField.type})</span>
+                    </Label>
+                    
+                    <Select
+                      value={mappings.find(m => m.appField === `custom_${customField.id}`)?.csvColumn || '__no_mapping__'}
+                      onValueChange={(value) => updateMapping(`custom_${customField.id}`, value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select CSV column" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__no_mapping__">-- No mapping --</SelectItem>
+                        {getAvailableColumns(`custom_${customField.id}`).map(header => (
+                          <SelectItem key={header} value={header}>
+                            {header}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ))}
+              </>
+            )}
           </div>
           
           <div className="flex justify-end space-x-2 pt-4 border-t">
@@ -158,7 +246,9 @@ export function FieldMappingDialog({ isOpen, onClose, csvHeaders, onConfirm }: F
               Cancel
             </Button>
             <Button onClick={handleConfirm}>
-              Import with Mapping
+              {importMode === 'delete' ? 'Delete Tasks' : 
+               importMode === 'update' ? 'Update Tasks' : 
+               'Import with Mapping'}
             </Button>
           </div>
         </div>

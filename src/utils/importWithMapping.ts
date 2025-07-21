@@ -1,4 +1,4 @@
-import { Task, TaskStatus, TaskType } from "@/types/project";
+import { Task, TaskStatus, TaskType, CustomField, FieldType } from "@/types/project";
 
 interface FieldMapping {
   csvColumn: string;
@@ -7,7 +7,8 @@ interface FieldMapping {
 
 export function importFromCSVWithMapping(
   csvContent: string, 
-  mappings: FieldMapping[]
+  mappings: FieldMapping[],
+  customFields: CustomField[] = []
 ): Omit<Task, 'id'>[] {
   const lines = csvContent.trim().split('\n');
   
@@ -96,6 +97,15 @@ export function importFromCSVWithMapping(
         );
       }
 
+      // Parse custom fields
+      const customFieldValues: Record<string, any> = {};
+      customFields.forEach(field => {
+        const value = getValue(`custom_${field.id}`);
+        if (value) {
+          customFieldValues[field.id] = parseCustomFieldValue(value, field.type);
+        }
+      });
+
       const task: Omit<Task, 'id'> = {
         name,
         type,
@@ -105,7 +115,8 @@ export function importFromCSVWithMapping(
         assignee: getValue('assignee'),
         progress,
         dependencies,
-        description: getValue('description')
+        description: getValue('description'),
+        customFields: Object.keys(customFieldValues).length > 0 ? customFieldValues : undefined
       };
 
       tasks.push(task);
@@ -200,6 +211,22 @@ function parseDate(dateString: string): Date | null {
   }
 
   return null;
+}
+
+function parseCustomFieldValue(value: string, fieldType: FieldType): any {
+  switch (fieldType) {
+    case 'number':
+      const num = parseFloat(value);
+      return isNaN(num) ? null : num;
+    case 'boolean':
+      return value.toLowerCase() === 'true' || value === '1';
+    case 'date':
+      return parseDate(value);
+    case 'select':
+    case 'text':
+    default:
+      return value;
+  }
 }
 
 export function parseCSVHeaders(csvContent: string): string[] {

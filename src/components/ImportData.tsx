@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Upload, FileSpreadsheet, Download } from "lucide-react";
-import { Task, TaskStatus, TaskType } from "@/types/project";
+import { Task, TaskStatus, TaskType, CustomField } from "@/types/project";
 import { useToast } from "@/hooks/use-toast";
 import { importFromCSV } from "@/utils/importUtils";
 import { importFromCSVWithMapping, parseCSVHeaders } from "@/utils/importWithMapping";
@@ -13,15 +13,26 @@ import { FieldMappingDialog } from "./FieldMappingDialog";
 
 interface ImportDataProps {
   onImport: (tasks: Omit<Task, 'id'>[]) => void;
+  onBulkUpdate?: (tasks: Omit<Task, 'id'>[]) => void;
+  onBulkDelete?: (taskNames: string[]) => void;
+  existingTasks?: Task[];
+  customFields?: CustomField[];
 }
 
-export function ImportData({ onImport }: ImportDataProps) {
+export function ImportData({ 
+  onImport, 
+  onBulkUpdate, 
+  onBulkDelete, 
+  existingTasks = [], 
+  customFields = [] 
+}: ImportDataProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [csvData, setCsvData] = useState('');
   const [webhookUrl, setWebhookUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showFieldMapping, setShowFieldMapping] = useState(false);
   const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
+  const [importMode, setImportMode] = useState<'create' | 'update' | 'delete'>('create');
   const { toast } = useToast();
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -71,29 +82,68 @@ export function ImportData({ onImport }: ImportDataProps) {
 
   const handleFieldMappingConfirm = (mappings: Array<{csvColumn: string; appField: string}>) => {
     try {
-      const tasks = importFromCSVWithMapping(csvData, mappings);
-      if (tasks.length === 0) {
-        toast({
-          title: "No tasks found",
-          description: "The CSV file doesn't contain valid task data",
-          variant: "destructive",
-        });
-        return;
-      }
+      const tasks = importFromCSVWithMapping(csvData, mappings, customFields);
+      
+      if (importMode === 'delete') {
+        const taskNames = tasks.map(task => task.name).filter(name => name);
+        if (taskNames.length === 0) {
+          toast({
+            title: "No task names found",
+            description: "The CSV file doesn't contain valid task names for deletion",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        if (onBulkDelete) {
+          onBulkDelete(taskNames);
+          toast({
+            title: "Bulk delete initiated",
+            description: `Marked ${taskNames.length} tasks for deletion`,
+          });
+        }
+      } else if (importMode === 'update') {
+        if (tasks.length === 0) {
+          toast({
+            title: "No tasks found",
+            description: "The CSV file doesn't contain valid task data",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        if (onBulkUpdate) {
+          onBulkUpdate(tasks);
+          toast({
+            title: "Bulk update successful",
+            description: `Updated ${tasks.length} tasks from CSV`,
+          });
+        }
+      } else {
+        if (tasks.length === 0) {
+          toast({
+            title: "No tasks found",
+            description: "The CSV file doesn't contain valid task data",
+            variant: "destructive",
+          });
+          return;
+        }
 
-      onImport(tasks);
+        onImport(tasks);
+        toast({
+          title: "Import successful",
+          description: `Imported ${tasks.length} tasks from CSV`,
+        });
+      }
+      
       setIsOpen(false);
       setShowFieldMapping(false);
       setCsvData('');
       setCsvHeaders([]);
-      toast({
-        title: "Import successful",
-        description: `Imported ${tasks.length} tasks from CSV`,
-      });
     } catch (error) {
       toast({
-        title: "Import failed",
-        description: error instanceof Error ? error.message : "Failed to parse CSV data",
+        title: "Operation failed",
+        description: error instanceof Error ? error.message : "Failed to process CSV data",
         variant: "destructive",
       });
     }
@@ -149,10 +199,27 @@ export function ImportData({ onImport }: ImportDataProps) {
   };
 
   const downloadTemplate = () => {
-    const template = `Task Name,Type,Status,Start Date,End Date,Assignee,Progress (%),Dependencies,Description
-"Setup Project Environment",task,not-started,2024-01-15,2024-01-17,"John Doe",0,"","Initialize development environment"
-"Requirements Analysis",milestone,in-progress,2024-01-18,2024-01-25,"Jane Smith",50,"","Gather and analyze project requirements"
-"Database Design",deliverable,not-started,2024-01-26,2024-02-02,"Mike Johnson",0,"Requirements Analysis","Design database schema"`;
+    // Include custom fields in template
+    const customFieldHeaders = customFields.map(field => field.name).join(',');
+    const customFieldSample = customFields.map(field => {
+      switch (field.type) {
+        case 'text': return '"Sample text"';
+        case 'number': return '100';
+        case 'date': return '2024-01-15';
+        case 'boolean': return 'true';
+        case 'select': return field.options?.[0] ? `"${field.options[0]}"` : '""';
+        default: return '""';
+      }
+    }).join(',');
+    
+    const headers = `Task Name,Type,Status,Start Date,End Date,Assignee,Progress (%),Dependencies,Description${customFieldHeaders ? ',' + customFieldHeaders : ''}`;
+    const sampleRows = [
+      `"Setup Project Environment",task,not-started,2024-01-15,2024-01-17,"John Doe",0,"","Initialize development environment"${customFieldSample ? ',' + customFieldSample : ''}`,
+      `"Requirements Analysis",milestone,in-progress,2024-01-18,2024-01-25,"Jane Smith",50,"","Gather and analyze project requirements"${customFieldSample ? ',' + customFieldSample : ''}`,
+      `"Database Design",deliverable,not-started,2024-01-26,2024-02-02,"Mike Johnson",0,"Requirements Analysis","Design database schema"${customFieldSample ? ',' + customFieldSample : ''}`
+    ];
+    
+    const template = [headers, ...sampleRows].join('\n');
 
     const blob = new Blob([template], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
@@ -190,6 +257,20 @@ export function ImportData({ onImport }: ImportDataProps) {
             </div>
             
             <div className="space-y-4">
+              <div>
+                <Label htmlFor="import-mode">Import Mode</Label>
+                <select
+                  id="import-mode"
+                  value={importMode}
+                  onChange={(e) => setImportMode(e.target.value as 'create' | 'update' | 'delete')}
+                  className="w-full mt-1 px-3 py-2 border border-input rounded-md"
+                >
+                  <option value="create">Create New Tasks</option>
+                  <option value="update">Update Existing Tasks (by name)</option>
+                  <option value="delete">Delete Tasks (by name)</option>
+                </select>
+              </div>
+              
               <div>
                 <Label htmlFor="csv-file">Upload CSV File</Label>
                 <Input
@@ -256,6 +337,8 @@ export function ImportData({ onImport }: ImportDataProps) {
         isOpen={showFieldMapping}
         onClose={handleFieldMappingClose}
         csvHeaders={csvHeaders}
+        customFields={customFields}
+        importMode={importMode}
         onConfirm={handleFieldMappingConfirm}
       />
     </Dialog>
