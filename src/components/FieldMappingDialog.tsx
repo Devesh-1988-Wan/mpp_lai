@@ -29,6 +29,31 @@ const APP_FIELDS = [
   { value: 'description', label: 'Description', required: false },
 ];
 
+const findBestMatch = (headers: string[], fieldName: string): string | null => {
+  const lowerHeaders = headers.map(h => h.toLowerCase().trim());
+  
+  const matchPatterns: Record<string, string[]> = {
+    name: ['task name', 'name', 'title'],
+    type: ['type', 'task type'],
+    status: ['status', 'task status'],
+    startDate: ['start date', 'start', 'start_date'],
+    endDate: ['end date', 'end', 'end_date', 'due date'],
+    assignee: ['assignee', 'assigned to', 'owner'],
+    progress: ['progress', 'progress (%)', 'completion'],
+    dependencies: ['dependencies', 'depends on'],
+    description: ['description', 'notes', 'details']
+  };
+
+  const patterns = matchPatterns[fieldName] || [];
+  for (const pattern of patterns) {
+    const index = lowerHeaders.indexOf(pattern);
+    if (index !== -1) {
+      return headers[index];
+    }
+  }
+  return null;
+};
+
 export function FieldMappingDialog({ isOpen, onClose, csvHeaders, onConfirm }: FieldMappingDialogProps) {
   const [mappings, setMappings] = useState<FieldMapping[]>(() => {
     // Auto-map fields based on common column names
@@ -41,30 +66,6 @@ export function FieldMappingDialog({ isOpen, onClose, csvHeaders, onConfirm }: F
     });
   });
 
-  const findBestMatch = (headers: string[], fieldName: string): string | null => {
-    const lowerHeaders = headers.map(h => h.toLowerCase().trim());
-    
-    const matchPatterns: Record<string, string[]> = {
-      name: ['task name', 'name', 'title'],
-      type: ['type', 'task type'],
-      status: ['status', 'task status'],
-      startDate: ['start date', 'start', 'start_date'],
-      endDate: ['end date', 'end', 'end_date', 'due date'],
-      assignee: ['assignee', 'assigned to', 'owner'],
-      progress: ['progress', 'progress (%)', 'completion'],
-      dependencies: ['dependencies', 'depends on'],
-      description: ['description', 'notes', 'details']
-    };
-
-    const patterns = matchPatterns[fieldName] || [];
-    for (const pattern of patterns) {
-      const index = lowerHeaders.indexOf(pattern);
-      if (index !== -1) {
-        return headers[index];
-      }
-    }
-    return null;
-  };
 
   const updateMapping = (appField: string, csvColumn: string) => {
     setMappings(prev => prev.map(mapping => 
