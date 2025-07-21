@@ -8,6 +8,8 @@ import { Upload, FileSpreadsheet, Download } from "lucide-react";
 import { Task, TaskStatus, TaskType } from "@/types/project";
 import { useToast } from "@/hooks/use-toast";
 import { importFromCSV } from "@/utils/importUtils";
+import { importFromCSVWithMapping, parseCSVHeaders } from "@/utils/importWithMapping";
+import { FieldMappingDialog } from "./FieldMappingDialog";
 
 interface ImportDataProps {
   onImport: (tasks: Omit<Task, 'id'>[]) => void;
@@ -18,6 +20,8 @@ export function ImportData({ onImport }: ImportDataProps) {
   const [csvData, setCsvData] = useState('');
   const [webhookUrl, setWebhookUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showFieldMapping, setShowFieldMapping] = useState(false);
+  const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
   const { toast } = useToast();
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -52,7 +56,22 @@ export function ImportData({ onImport }: ImportDataProps) {
     }
 
     try {
-      const tasks = importFromCSV(csvData);
+      // Parse headers and show mapping dialog
+      const headers = parseCSVHeaders(csvData);
+      setCsvHeaders(headers);
+      setShowFieldMapping(true);
+    } catch (error) {
+      toast({
+        title: "CSV parsing failed",
+        description: error instanceof Error ? error.message : "Failed to parse CSV headers",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleFieldMappingConfirm = (mappings: Array<{csvColumn: string; appField: string}>) => {
+    try {
+      const tasks = importFromCSVWithMapping(csvData, mappings);
       if (tasks.length === 0) {
         toast({
           title: "No tasks found",
@@ -64,7 +83,9 @@ export function ImportData({ onImport }: ImportDataProps) {
 
       onImport(tasks);
       setIsOpen(false);
+      setShowFieldMapping(false);
       setCsvData('');
+      setCsvHeaders([]);
       toast({
         title: "Import successful",
         description: `Imported ${tasks.length} tasks from CSV`,
@@ -76,6 +97,11 @@ export function ImportData({ onImport }: ImportDataProps) {
         variant: "destructive",
       });
     }
+  };
+
+  const handleFieldMappingClose = () => {
+    setShowFieldMapping(false);
+    setCsvHeaders([]);
   };
 
   const handleGoogleSheetsSync = async (e: React.FormEvent) => {
@@ -225,6 +251,13 @@ export function ImportData({ onImport }: ImportDataProps) {
           </div>
         </div>
       </DialogContent>
+      
+      <FieldMappingDialog
+        isOpen={showFieldMapping}
+        onClose={handleFieldMappingClose}
+        csvHeaders={csvHeaders}
+        onConfirm={handleFieldMappingConfirm}
+      />
     </Dialog>
   );
 }
