@@ -160,31 +160,64 @@ const ProjectDetail = () => {
     setEditingTask(undefined);
   };
 
-  const handleImportTasks = (importedTasks: Omit<Task, 'id'>[]) => {
-    const newTasks = importedTasks.map(task => ({
-      ...task,
-      id: Math.random().toString(36).substr(2, 9)
-    }));
-    setProject({ 
-      ...project, 
-      tasks: [...project.tasks, ...newTasks], 
-      lastModified: new Date() 
-    });
-    toast({
-      title: "Import Successful",
-      description: `Imported ${newTasks.length} tasks successfully.`,
-    });
+  const handleImportTasks = async (importedTasks: Omit<Task, 'id'>[]) => {
+    try {
+      const newTasks = importedTasks.map(task => ({
+        ...task,
+        id: Math.random().toString(36).substr(2, 9)
+      }));
+      
+      const updatedProject = { 
+        ...project, 
+        tasks: [...project.tasks, ...newTasks], 
+        lastModified: new Date() 
+      };
+      
+      setProject(updatedProject);
+      
+      // Persist to storage
+      await ProjectService.updateProject(project.id, updatedProject);
+      
+      toast({
+        title: "Import Successful",
+        description: `Imported ${newTasks.length} tasks successfully.`,
+      });
+    } catch (error) {
+      console.error('Error importing tasks:', error);
+      toast({
+        title: "Import Failed",
+        description: "Failed to import tasks. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
-  const handleDeleteTask = (taskId: string) => {
-    const taskToDelete = project.tasks.find(task => task.id === taskId);
-    const updatedTasks = project.tasks.filter(task => task.id !== taskId);
-    setProject({ ...project, tasks: updatedTasks, lastModified: new Date() });
-    
-    if (taskToDelete) {
+  const handleDeleteTask = async (taskId: string) => {
+    try {
+      const taskToDelete = project.tasks.find(task => task.id === taskId);
+      const updatedTasks = project.tasks.filter(task => task.id !== taskId);
+      
+      const updatedProject = { ...project, tasks: updatedTasks, lastModified: new Date() };
+      setProject(updatedProject);
+      
+      // Delete from task service
+      await TaskService.deleteTask(taskId, project.id);
+      
+      // Persist project changes
+      await ProjectService.updateProject(project.id, updatedProject);
+      
+      if (taskToDelete) {
+        toast({
+          title: "Task Deleted",
+          description: `"${taskToDelete.name}" has been removed from your project.`,
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting task:', error);
       toast({
-        title: "Task Deleted",
-        description: `"${taskToDelete.name}" has been removed from your project.`,
+        title: "Delete Failed",
+        description: "Failed to delete task. Please try again.",
         variant: "destructive"
       });
     }
@@ -198,8 +231,86 @@ const ProjectDetail = () => {
     });
   };
 
-  const handleUpdateCustomFields = (customFields: Project['customFields']) => {
-    setProject({ ...project, customFields, lastModified: new Date() });
+  const handleUpdateCustomFields = async (customFields: Project['customFields']) => {
+    try {
+      const updatedProject = { ...project, customFields, lastModified: new Date() };
+      setProject(updatedProject);
+      
+      // Persist to storage
+      await ProjectService.updateProject(project.id, updatedProject);
+      
+      toast({
+        title: "Custom Fields Updated",
+        description: "Custom fields have been updated successfully.",
+      });
+    } catch (error) {
+      console.error('Error updating custom fields:', error);
+      toast({
+        title: "Update Failed",
+        description: "Failed to update custom fields. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Handle bulk update operations
+  const handleBulkUpdate = async (updatedTasks: Omit<Task, 'id'>[]) => {
+    try {
+      const updatedTasksWithIds = project.tasks.map(existingTask => {
+        const updatedTask = updatedTasks.find(t => t.name === existingTask.name);
+        return updatedTask ? { ...updatedTask, id: existingTask.id } : existingTask;
+      });
+      
+      const updatedProject = {
+        ...project,
+        tasks: updatedTasksWithIds,
+        lastModified: new Date()
+      };
+      
+      setProject(updatedProject);
+      await ProjectService.updateProject(project.id, updatedProject);
+      
+      toast({
+        title: "Bulk Update Successful",
+        description: `Updated ${updatedTasks.length} tasks successfully.`,
+      });
+    } catch (error) {
+      console.error('Error in bulk update:', error);
+      toast({
+        title: "Bulk Update Failed",
+        description: "Failed to update tasks. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Handle bulk delete operations
+  const handleBulkDelete = async (taskNames: string[]) => {
+    try {
+      const updatedTasks = project.tasks.filter(task => !taskNames.includes(task.name));
+      
+      const updatedProject = {
+        ...project,
+        tasks: updatedTasks,
+        lastModified: new Date()
+      };
+      
+      setProject(updatedProject);
+      await ProjectService.updateProject(project.id, updatedProject);
+      
+      toast({
+        title: "Bulk Delete Successful",
+        description: `Deleted ${taskNames.length} tasks successfully.`,
+        variant: "destructive"
+      });
+    } catch (error) {
+      console.error('Error in bulk delete:', error);
+      toast({
+        title: "Bulk Delete Failed",
+        description: "Failed to delete tasks. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   if (!project) {
@@ -263,7 +374,13 @@ const ProjectDetail = () => {
 
         {/* Quick Actions */}
         <div className="flex gap-2 flex-wrap">
-          <ImportData onImport={handleImportTasks} />
+          <ImportData 
+            onImport={handleImportTasks}
+            onBulkUpdate={handleBulkUpdate}
+            onBulkDelete={handleBulkDelete}
+            existingTasks={project.tasks}
+            customFields={project.customFields}
+          />
           <CustomFieldsManager 
             customFields={project.customFields} 
             onUpdate={handleUpdateCustomFields}
