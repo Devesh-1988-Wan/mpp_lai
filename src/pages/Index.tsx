@@ -2,7 +2,8 @@ import { useState, useMemo } from "react";
 import { Task } from "@/types/project";
 import { ProjectHeader } from "@/components/ProjectHeader";
 import { TaskForm } from "@/components/TaskForm";
-import { GanttChart } from "@/components/GanttChart";
+import { DashboardTabs } from "@/components/DashboardTabs";
+import { WelcomeOnboarding } from "@/components/WelcomeOnboarding";
 import { exportToCSV, exportToExcel } from "@/utils/exportUtils";
 import { useToast } from "@/hooks/use-toast";
 import { addDays } from "date-fns";
@@ -76,6 +77,7 @@ const Index = () => {
   const [tasks, setTasks] = useState<Task[]>(sampleTasks);
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>();
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const { toast } = useToast();
 
   const projectStats = useMemo(() => {
@@ -146,6 +148,26 @@ const Index = () => {
     });
   };
 
+  const handleStartNewProject = () => {
+    setTasks([]);
+    setShowOnboarding(false);
+    setShowTaskForm(true);
+    toast({
+      title: "New Project Started",
+      description: "Ready to create your first task!",
+    });
+  };
+
+  // Show onboarding for new users or when there are no tasks
+  if (showOnboarding || tasks.length === 0) {
+    return (
+      <WelcomeOnboarding
+        onComplete={() => setShowOnboarding(false)}
+        onStartProject={handleStartNewProject}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <ProjectHeader
@@ -190,21 +212,13 @@ const Index = () => {
           />
         )}
 
-        {/* Gantt Chart */}
-        <GanttChart
+        {/* Dashboard Tabs */}
+        <DashboardTabs
           tasks={tasks}
           onEditTask={handleEditTask}
           onDeleteTask={handleDeleteTask}
+          onExportReport={handleExport}
         />
-
-        {tasks.length === 0 && !showTaskForm && (
-          <Card className="p-12 text-center">
-            <h3 className="text-xl font-semibold mb-2">Welcome to Project Manager</h3>
-            <p className="text-muted-foreground mb-4">
-              Create your first task to start planning your project timeline
-            </p>
-          </Card>
-        )}
       </div>
     </div>
   );
