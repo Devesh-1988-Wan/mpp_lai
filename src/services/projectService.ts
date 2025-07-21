@@ -38,6 +38,47 @@ export class ProjectService {
 
   // Get a specific project by ID
   static async getProject(id: string) {
+    if (!supabase) {
+      // Return sample project data when Supabase is not configured
+      const sampleProjects = [
+        {
+          id: '1',
+          name: 'Sample Software Project',
+          description: 'A comprehensive software development project with multiple phases',
+          createdDate: new Date('2024-01-01'),
+          lastModified: new Date(),
+          status: 'active' as const,
+          customFields: [
+            {
+              id: 'cf1',
+              name: 'Priority',
+              type: 'select' as const,
+              required: true,
+              options: ['Low', 'Medium', 'High', 'Critical']
+            }
+          ],
+          teamMembers: ['Sarah Johnson', 'Alex Chen'],
+          tasks: [
+            {
+              id: '1',
+              name: 'Project Planning & Requirements',
+              description: 'Define project scope and gather requirements',
+              type: 'task' as const,
+              status: 'completed' as const,
+              startDate: new Date('2024-01-01'),
+              endDate: new Date('2024-01-07'),
+              dependencies: [],
+              assignee: 'Sarah Johnson',
+              progress: 100,
+              customFields: { 'cf1': 'High' }
+            }
+          ]
+        }
+      ];
+      
+      return sampleProjects.find(p => p.id === id) || null;
+    }
+
     const { data, error } = await supabase
       .from('projects')
       .select(`

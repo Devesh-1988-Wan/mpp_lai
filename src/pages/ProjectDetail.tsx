@@ -1,6 +1,8 @@
 import { useState, useMemo, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Task, Project } from "@/types/project";
+import { ProjectService } from "@/services/projectService";
+import { TaskService } from "@/services/taskService";
 import { ProjectHeader } from "@/components/ProjectHeader";
 import { TaskForm } from "@/components/TaskForm";
 import { ImportData } from "@/components/ImportData";
@@ -10,89 +12,7 @@ import { exportToCSV, exportToExcel } from "@/utils/exportUtils";
 import { useToast } from "@/hooks/use-toast";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, ArrowLeft } from "lucide-react";
-
-// Mock function to get project data - in real app this would come from API/database
-const getProjectById = (id: string): Project | null => {
-  // Sample project data
-  const sampleProjects: Project[] = [
-    {
-      id: '1',
-      name: 'Sample Software Project',
-      description: 'A comprehensive software development project with multiple phases',
-      createdDate: new Date('2024-01-01'),
-      lastModified: new Date('2024-01-15'),
-      status: 'active',
-      customFields: [
-        {
-          id: 'cf1',
-          name: 'Priority',
-          type: 'select',
-          required: true,
-          options: ['Low', 'Medium', 'High', 'Critical']
-        },
-        {
-          id: 'cf2',
-          name: 'Estimated Hours',
-          type: 'number',
-          required: false
-        }
-      ],
-      teamMembers: ['Sarah Johnson', 'Alex Chen', 'Mike Rodriguez', 'Emily Davis'],
-      tasks: [
-        {
-          id: '1',
-          name: 'Project Planning & Requirements',
-          description: 'Define project scope, gather requirements, and create initial project plan',
-          type: 'task',
-          status: 'completed',
-          startDate: new Date('2024-01-01'),
-          endDate: new Date('2024-01-07'),
-          dependencies: [],
-          assignee: 'Sarah Johnson',
-          progress: 100,
-          customFields: {
-            'cf1': 'High',
-            'cf2': 40
-          }
-        },
-        {
-          id: '2', 
-          name: 'Design Phase Kickoff',
-          description: 'Begin UI/UX design and architecture planning',
-          type: 'milestone',
-          status: 'completed',
-          startDate: new Date('2024-01-08'),
-          endDate: new Date('2024-01-08'),
-          dependencies: ['1'],
-          assignee: 'Alex Chen',
-          progress: 100,
-          customFields: {
-            'cf1': 'Critical'
-          }
-        },
-        {
-          id: '3',
-          name: 'Database Architecture',
-          description: 'Design and implement database schema and relationships',
-          type: 'task',
-          status: 'in-progress',
-          startDate: new Date('2024-01-09'),
-          endDate: new Date('2024-01-15'),
-          dependencies: ['2'],
-          assignee: 'Mike Rodriguez',
-          progress: 65,
-          customFields: {
-            'cf1': 'Medium',
-            'cf2': 60
-          }
-        }
-      ]
-    }
-  ];
-
-  return sampleProjects.find(p => p.id === id) || null;
-};
+import { Plus, ArrowLeft, Loader2 } from "lucide-react";
 
 const ProjectDetail = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -100,24 +20,37 @@ const ProjectDetail = () => {
   const { toast } = useToast();
 
   const [project, setProject] = useState<Project | null>(null);
+  const [loading, setLoading] = useState(true);
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>();
 
   useEffect(() => {
     if (projectId) {
-      const projectData = getProjectById(projectId);
+      loadProject(projectId);
+    }
+  }, [projectId]);
+
+  const loadProject = async (id: string) => {
+    try {
+      setLoading(true);
+      const projectData = await ProjectService.getProject(id);
       if (projectData) {
         setProject(projectData);
       } else {
-        toast({
-          title: "Project Not Found",
-          description: "The requested project could not be found.",
-          variant: "destructive"
-        });
-        navigate('/projects');
+        throw new Error('Project not found');
       }
+    } catch (error) {
+      console.error('Error loading project:', error);
+      toast({
+        title: "Project Not Found",
+        description: "The requested project could not be found.",
+        variant: "destructive"
+      });
+      navigate('/projects');
+    } finally {
+      setLoading(false);
     }
-  }, [projectId, navigate, toast]);
+  };
 
   const projectStats = useMemo(() => {
     if (!project) return { total: 0, completed: 0, inProgress: 0, milestones: 0 };
@@ -130,10 +63,11 @@ const ProjectDetail = () => {
     return { total, completed, inProgress, milestones };
   }, [project]);
 
-  if (!project) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
           <h2 className="text-2xl font-bold mb-2">Loading Project...</h2>
           <p className="text-muted-foreground">Please wait while we load your project.</p>
         </div>
