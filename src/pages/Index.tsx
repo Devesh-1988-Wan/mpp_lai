@@ -1,11 +1,210 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState, useMemo } from "react";
+import { Task } from "@/types/project";
+import { ProjectHeader } from "@/components/ProjectHeader";
+import { TaskForm } from "@/components/TaskForm";
+import { GanttChart } from "@/components/GanttChart";
+import { exportToCSV, exportToExcel } from "@/utils/exportUtils";
+import { useToast } from "@/hooks/use-toast";
+import { addDays } from "date-fns";
+import { Card } from "@/components/ui/card";
+
+// Sample data for demonstration
+const sampleTasks: Task[] = [
+  {
+    id: '1',
+    name: 'Project Planning & Requirements',
+    description: 'Define project scope, gather requirements, and create initial project plan',
+    type: 'task',
+    status: 'completed',
+    startDate: new Date('2024-01-01'),
+    endDate: new Date('2024-01-07'),
+    dependencies: [],
+    assignee: 'Sarah Johnson',
+    progress: 100
+  },
+  {
+    id: '2', 
+    name: 'Design Phase Kickoff',
+    description: 'Begin UI/UX design and architecture planning',
+    type: 'milestone',
+    status: 'completed',
+    startDate: new Date('2024-01-08'),
+    endDate: new Date('2024-01-08'),
+    dependencies: ['1'],
+    assignee: 'Alex Chen',
+    progress: 100
+  },
+  {
+    id: '3',
+    name: 'Database Architecture',
+    description: 'Design and implement database schema and relationships',
+    type: 'task',
+    status: 'in-progress',
+    startDate: new Date('2024-01-09'),
+    endDate: new Date('2024-01-15'),
+    dependencies: ['2'],
+    assignee: 'Mike Rodriguez',
+    progress: 65
+  },
+  {
+    id: '4',
+    name: 'Frontend Development',
+    description: 'Develop user interface components and layouts',
+    type: 'task', 
+    status: 'in-progress',
+    startDate: new Date('2024-01-12'),
+    endDate: new Date('2024-01-25'),
+    dependencies: ['2'],
+    assignee: 'Emily Davis',
+    progress: 40
+  },
+  {
+    id: '5',
+    name: 'Beta Release',
+    description: 'First beta version ready for testing',
+    type: 'deliverable',
+    status: 'not-started',
+    startDate: new Date('2024-01-26'),
+    endDate: new Date('2024-01-28'),
+    dependencies: ['3', '4'],
+    assignee: 'Team Lead',
+    progress: 0
+  }
+];
 
 const Index = () => {
+  const [tasks, setTasks] = useState<Task[]>(sampleTasks);
+  const [showTaskForm, setShowTaskForm] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | undefined>();
+  const { toast } = useToast();
+
+  const projectStats = useMemo(() => {
+    const total = tasks.length;
+    const completed = tasks.filter(task => task.status === 'completed').length;
+    const inProgress = tasks.filter(task => task.status === 'in-progress').length;
+    const milestones = tasks.filter(task => task.type === 'milestone').length;
+    
+    return { total, completed, inProgress, milestones };
+  }, [tasks]);
+
+  const handleAddTask = () => {
+    setEditingTask(undefined);
+    setShowTaskForm(true);
+  };
+
+  const handleEditTask = (task: Task) => {
+    setEditingTask(task);
+    setShowTaskForm(true);
+  };
+
+  const handleSaveTask = (taskData: Omit<Task, 'id'>) => {
+    if (editingTask) {
+      // Update existing task
+      setTasks(prev => prev.map(task => 
+        task.id === editingTask.id 
+          ? { ...taskData, id: editingTask.id }
+          : task
+      ));
+      toast({
+        title: "Task Updated",
+        description: `"${taskData.name}" has been updated successfully.`,
+      });
+    } else {
+      // Create new task
+      const newTask: Task = {
+        ...taskData,
+        id: Date.now().toString()
+      };
+      setTasks(prev => [...prev, newTask]);
+      toast({
+        title: "Task Created", 
+        description: `"${taskData.name}" has been added to your project.`,
+      });
+    }
+    setShowTaskForm(false);
+    setEditingTask(undefined);
+  };
+
+  const handleDeleteTask = (taskId: string) => {
+    const taskToDelete = tasks.find(task => task.id === taskId);
+    setTasks(prev => prev.filter(task => task.id !== taskId));
+    
+    if (taskToDelete) {
+      toast({
+        title: "Task Deleted",
+        description: `"${taskToDelete.name}" has been removed from your project.`,
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleExport = () => {
+    exportToExcel(tasks, 'Sample Project');
+    toast({
+      title: "Export Successful",
+      description: "Your project plan has been exported to CSV format.",
+    });
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
+    <div className="min-h-screen bg-background">
+      <ProjectHeader
+        projectName="Sample Software Project"
+        totalTasks={projectStats.total}
+        completedTasks={projectStats.completed}
+        onAddTask={handleAddTask}
+        onExport={handleExport}
+      />
+
+      <div className="container mx-auto p-6 space-y-6">
+        {/* Project Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card className="p-4">
+            <div className="text-2xl font-bold text-primary">{projectStats.total}</div>
+            <div className="text-sm text-muted-foreground">Total Tasks</div>
+          </Card>
+          <Card className="p-4">
+            <div className="text-2xl font-bold text-success">{projectStats.completed}</div>
+            <div className="text-sm text-muted-foreground">Completed</div>
+          </Card>
+          <Card className="p-4">
+            <div className="text-2xl font-bold text-warning">{projectStats.inProgress}</div>
+            <div className="text-sm text-muted-foreground">In Progress</div>
+          </Card>
+          <Card className="p-4">
+            <div className="text-2xl font-bold text-milestone">{projectStats.milestones}</div>
+            <div className="text-sm text-muted-foreground">Milestones</div>
+          </Card>
+        </div>
+
+        {/* Task Form */}
+        {showTaskForm && (
+          <TaskForm
+            onSave={handleSaveTask}
+            onCancel={() => {
+              setShowTaskForm(false);
+              setEditingTask(undefined);
+            }}
+            existingTasks={tasks}
+            editTask={editingTask}
+          />
+        )}
+
+        {/* Gantt Chart */}
+        <GanttChart
+          tasks={tasks}
+          onEditTask={handleEditTask}
+          onDeleteTask={handleDeleteTask}
+        />
+
+        {tasks.length === 0 && !showTaskForm && (
+          <Card className="p-12 text-center">
+            <h3 className="text-xl font-semibold mb-2">Welcome to Project Manager</h3>
+            <p className="text-muted-foreground mb-4">
+              Create your first task to start planning your project timeline
+            </p>
+          </Card>
+        )}
       </div>
     </div>
   );
