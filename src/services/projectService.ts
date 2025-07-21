@@ -5,8 +5,32 @@ type Project = Database['public']['Tables']['projects']['Row']
 type ProjectInsert = Database['public']['Tables']['projects']['Insert']
 type ProjectUpdate = Database['public']['Tables']['projects']['Update']
 
+// LocalStorage key for demo projects
+const DEMO_PROJECTS_KEY = 'lovable-demo-projects';
+
+// Helper functions for localStorage persistence
+const loadDemoProjects = (): any[] => {
+  if (typeof window === 'undefined') return [];
+  try {
+    const stored = localStorage.getItem(DEMO_PROJECTS_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch (error) {
+    console.warn('Failed to load demo projects from localStorage:', error);
+    return [];
+  }
+};
+
+const saveDemoProjects = (projects: any[]): void => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(DEMO_PROJECTS_KEY, JSON.stringify(projects));
+  } catch (error) {
+    console.warn('Failed to save demo projects to localStorage:', error);
+  }
+};
+
 // In-memory storage for demo projects when Supabase is not configured
-let demoProjects: any[] = [];
+let demoProjects: any[] = loadDemoProjects();
 export class ProjectService {
   // Get all projects for the current user
   static async getUserProjects() {
@@ -24,6 +48,7 @@ export class ProjectService {
             teamMembers: ['Demo User']
           }
         ];
+        saveDemoProjects(demoProjects);
       }
       return demoProjects;
     }
@@ -84,6 +109,7 @@ export class ProjectService {
             ]
           };
           demoProjects.push(project);
+          saveDemoProjects(demoProjects);
         }
       }
       
@@ -120,8 +146,9 @@ export class ProjectService {
         customFields: []
       };
       
-      // Add to demo storage
+      // Add to demo storage and persist
       demoProjects.push(mockProject);
+      saveDemoProjects(demoProjects);
       
       return mockProject;
     }
@@ -143,7 +170,22 @@ export class ProjectService {
   }
 
   // Update a project
-  static async updateProject(id: string, updates: ProjectUpdate) {
+  static async updateProject(id: string, updates: any) {
+    if (!supabase) {
+      // Handle demo mode
+      const projectIndex = demoProjects.findIndex(p => p.id === id);
+      if (projectIndex !== -1) {
+        demoProjects[projectIndex] = { 
+          ...demoProjects[projectIndex], 
+          ...updates,
+          lastModified: new Date()
+        };
+        saveDemoProjects(demoProjects);
+        return demoProjects[projectIndex];
+      }
+      throw new Error('Project not found');
+    }
+
     const { data, error } = await supabase
       .from('projects')
       .update(updates)
@@ -161,6 +203,17 @@ export class ProjectService {
 
   // Delete a project
   static async deleteProject(id: string) {
+    if (!supabase) {
+      // Handle demo mode
+      const projectIndex = demoProjects.findIndex(p => p.id === id);
+      if (projectIndex !== -1) {
+        demoProjects.splice(projectIndex, 1);
+        saveDemoProjects(demoProjects);
+        return;
+      }
+      throw new Error('Project not found');
+    }
+
     const { error } = await supabase
       .from('projects')
       .delete()

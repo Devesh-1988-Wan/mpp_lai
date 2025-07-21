@@ -5,9 +5,40 @@ type Task = Database['public']['Tables']['tasks']['Row']
 type TaskInsert = Database['public']['Tables']['tasks']['Insert']
 type TaskUpdate = Database['public']['Tables']['tasks']['Update']
 
+// LocalStorage key for demo projects (to sync with ProjectService)
+const DEMO_PROJECTS_KEY = 'lovable-demo-projects';
+
+// Helper functions for localStorage persistence
+const loadDemoProjects = (): any[] => {
+  if (typeof window === 'undefined') return [];
+  try {
+    const stored = localStorage.getItem(DEMO_PROJECTS_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch (error) {
+    console.warn('Failed to load demo projects from localStorage:', error);
+    return [];
+  }
+};
+
+const saveDemoProjects = (projects: any[]): void => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(DEMO_PROJECTS_KEY, JSON.stringify(projects));
+  } catch (error) {
+    console.warn('Failed to save demo projects to localStorage:', error);
+  }
+};
+
 export class TaskService {
   // Get all tasks for a project
   static async getProjectTasks(projectId: string) {
+    if (!supabase) {
+      // Load from localStorage demo projects
+      const demoProjects = loadDemoProjects();
+      const project = demoProjects.find(p => p.id === projectId);
+      return project?.tasks || [];
+    }
+
     const { data, error } = await supabase
       .from('tasks')
       .select('*')
@@ -19,7 +50,38 @@ export class TaskService {
   }
 
   // Create a new task
-  static async createTask(task: TaskInsert) {
+  static async createTask(task: any) {
+    if (!supabase) {
+      // Handle demo mode
+      const demoProjects = loadDemoProjects();
+      const projectIndex = demoProjects.findIndex(p => p.id === task.project_id);
+      
+      if (projectIndex !== -1) {
+        const newTask = {
+          id: Date.now().toString(),
+          name: task.name,
+          description: task.description || '',
+          type: task.type || task.task_type || 'task',
+          status: task.status || 'not-started',
+          startDate: new Date(task.start_date || task.startDate),
+          endDate: new Date(task.end_date || task.endDate),
+          dependencies: task.dependencies || [],
+          assignee: task.assignee || '',
+          progress: task.progress || 0,
+          customFields: task.custom_fields || task.customFields || {}
+        };
+        
+        if (!demoProjects[projectIndex].tasks) {
+          demoProjects[projectIndex].tasks = [];
+        }
+        demoProjects[projectIndex].tasks.push(newTask);
+        saveDemoProjects(demoProjects);
+        
+        return newTask;
+      }
+      throw new Error('Project not found');
+    }
+
     const { data, error } = await supabase
       .from('tasks')
       .insert([task])
@@ -38,7 +100,24 @@ export class TaskService {
   }
 
   // Update a task
-  static async updateTask(id: string, updates: TaskUpdate) {
+  static async updateTask(id: string, updates: any) {
+    if (!supabase) {
+      // Handle demo mode
+      const demoProjects = loadDemoProjects();
+      
+      for (const project of demoProjects) {
+        if (project.tasks) {
+          const taskIndex = project.tasks.findIndex((t: any) => t.id === id);
+          if (taskIndex !== -1) {
+            project.tasks[taskIndex] = { ...project.tasks[taskIndex], ...updates };
+            saveDemoProjects(demoProjects);
+            return project.tasks[taskIndex];
+          }
+        }
+      }
+      throw new Error('Task not found');
+    }
+
     const { data, error } = await supabase
       .from('tasks')
       .update(updates)
@@ -56,6 +135,22 @@ export class TaskService {
 
   // Delete a task
   static async deleteTask(id: string, projectId: string) {
+    if (!supabase) {
+      // Handle demo mode
+      const demoProjects = loadDemoProjects();
+      const projectIndex = demoProjects.findIndex(p => p.id === projectId);
+      
+      if (projectIndex !== -1 && demoProjects[projectIndex].tasks) {
+        const taskIndex = demoProjects[projectIndex].tasks.findIndex((t: any) => t.id === id);
+        if (taskIndex !== -1) {
+          demoProjects[projectIndex].tasks.splice(taskIndex, 1);
+          saveDemoProjects(demoProjects);
+          return;
+        }
+      }
+      throw new Error('Task not found');
+    }
+
     const { error } = await supabase
       .from('tasks')
       .delete()
@@ -69,6 +164,11 @@ export class TaskService {
 
   // Update task progress
   static async updateTaskProgress(id: string, progress: number) {
+    if (!supabase) {
+      // Handle demo mode - use updateTask method
+      return await this.updateTask(id, { progress });
+    }
+
     const { data, error } = await supabase
       .from('tasks')
       .update({ progress })
@@ -96,7 +196,21 @@ export class TaskService {
   }
 
   // Bulk import tasks
-  static async importTasks(tasks: TaskInsert[]) {
+  static async importTasks(tasks: any[]) {
+    if (!supabase) {
+      // Handle demo mode
+      const results = [];
+      for (const task of tasks) {
+        try {
+          const result = await this.createTask(task);
+          results.push(result);
+        } catch (error) {
+          console.warn('Failed to import task:', task.name, error);
+        }
+      }
+      return results;
+    }
+
     const { data, error } = await supabase
       .from('tasks')
       .insert(tasks)
@@ -117,6 +231,29 @@ export class TaskService {
 
   // Get task dependencies
   static async getTaskDependencies(taskId: string) {
+    if (!supabase) {
+      // Handle demo mode
+      const demoProjects = loadDemoProjects();
+      let task: any = null;
+      
+      for (const project of demoProjects) {
+        if (project.tasks) {
+          task = project.tasks.find((t: any) => t.id === taskId);
+          if (task) break;
+        }
+      }
+      
+      if (!task || !task.dependencies || task.dependencies.length === 0) {
+        return [];
+      }
+      
+      // Find dependent tasks in the same project
+      const project = demoProjects.find(p => p.tasks?.some((t: any) => t.id === taskId));
+      if (!project) return [];
+      
+      return project.tasks.filter((t: any) => task.dependencies.includes(t.id)) || [];
+    }
+
     const { data: task, error } = await supabase
       .from('tasks')
       .select('dependencies, project_id')
@@ -164,6 +301,8 @@ export class TaskService {
 
   // Log activity for audit trail
   private static async logActivity(projectId: string, action: string, changes?: any, taskId?: string) {
+    if (!supabase) return; // Skip logging when Supabase is not configured
+    
     const { data: { user } } = await supabase.auth.getUser()
     
     if (user) {
