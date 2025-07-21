@@ -2,12 +2,15 @@ import { useState, useMemo } from "react";
 import { Task } from "@/types/project";
 import { ProjectHeader } from "@/components/ProjectHeader";
 import { TaskForm } from "@/components/TaskForm";
-import { DashboardTabs } from "@/components/DashboardTabs";
+import { ImportData } from "@/components/ImportData";
 import { WelcomeOnboarding } from "@/components/WelcomeOnboarding";
+import { DashboardTabs } from "@/components/DashboardTabs";
 import { exportToCSV, exportToExcel } from "@/utils/exportUtils";
 import { useToast } from "@/hooks/use-toast";
 import { addDays } from "date-fns";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 
 // Sample data for demonstration
 const sampleTasks: Task[] = [
@@ -127,6 +130,18 @@ const Index = () => {
     setEditingTask(undefined);
   };
 
+  const handleImportTasks = (importedTasks: Omit<Task, 'id'>[]) => {
+    const newTasks = importedTasks.map(task => ({
+      ...task,
+      id: Math.random().toString(36).substr(2, 9)
+    }));
+    setTasks(prev => [...prev, ...newTasks]);
+    toast({
+      title: "Import Successful",
+      description: `Imported ${newTasks.length} tasks successfully.`,
+    });
+  };
+
   const handleDeleteTask = (taskId: string) => {
     const taskToDelete = tasks.find(task => task.id === taskId);
     setTasks(prev => prev.filter(task => task.id !== taskId));
@@ -199,7 +214,14 @@ const Index = () => {
           </Card>
         </div>
 
-        {/* Task Form */}
+        {/* Quick Actions */}
+        <div className="flex gap-2 flex-wrap">
+          <ImportData onImport={handleImportTasks} />
+          <Button onClick={handleAddTask}>
+            <Plus className="w-4 h-4 mr-2" />
+            Add Task
+          </Button>
+        </div>
         {showTaskForm && (
           <TaskForm
             onSave={handleSaveTask}
