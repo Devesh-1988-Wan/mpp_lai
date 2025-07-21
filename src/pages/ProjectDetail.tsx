@@ -33,10 +33,24 @@ const ProjectDetail = () => {
   const loadProject = async (id: string) => {
     try {
       setLoading(true);
+      console.log('Loading project with ID:', id);
       const projectData = await ProjectService.getProject(id);
+      console.log('Project data received:', projectData);
+      
       if (projectData) {
-        setProject(projectData);
+        // Ensure the project has all required properties
+        const normalizedProject = {
+          ...projectData,
+          tasks: projectData.tasks || [],
+          customFields: projectData.customFields || [],
+          teamMembers: projectData.teamMembers || [],
+          createdDate: projectData.createdDate ? new Date(projectData.createdDate) : new Date(),
+          lastModified: projectData.lastModified ? new Date(projectData.lastModified) : new Date()
+        };
+        console.log('Normalized project:', normalizedProject);
+        setProject(normalizedProject);
       } else {
+        console.error('Project data is null/undefined');
         throw new Error('Project not found');
       }
     } catch (error) {
@@ -85,29 +99,61 @@ const ProjectDetail = () => {
     setShowTaskForm(true);
   };
 
-  const handleSaveTask = (taskData: Omit<Task, 'id'>) => {
-    if (editingTask) {
-      // Update existing task
-      const updatedTasks = project.tasks.map(task => 
-        task.id === editingTask.id 
-          ? { ...taskData, id: editingTask.id }
-          : task
-      );
-      setProject({ ...project, tasks: updatedTasks, lastModified: new Date() });
+  const handleSaveTask = async (taskData: Omit<Task, 'id'>) => {
+    try {
+      if (editingTask) {
+        // Update existing task
+        await TaskService.updateTask(editingTask.id, taskData);
+        const updatedTasks = project.tasks.map(task => 
+          task.id === editingTask.id 
+            ? { ...taskData, id: editingTask.id }
+            : task
+        );
+        const updatedProject = { ...project, tasks: updatedTasks, lastModified: new Date() };
+        setProject(updatedProject);
+        
+        // Update project in storage
+        await ProjectService.updateProject(project.id, updatedProject);
+        
+        toast({
+          title: "Task Updated",
+          description: `"${taskData.name}" has been updated successfully.`,
+        });
+      } else {
+        // Create new task
+        const newTaskData = {
+          ...taskData,
+          project_id: project.id,
+          projectId: project.id // Add both for compatibility
+        };
+        
+        const createdTask = await TaskService.createTask(newTaskData);
+        const newTask: Task = {
+          ...taskData,
+          id: createdTask.id || Date.now().toString()
+        };
+        
+        const updatedProject = { 
+          ...project, 
+          tasks: [...project.tasks, newTask], 
+          lastModified: new Date() 
+        };
+        setProject(updatedProject);
+        
+        // Update project in storage
+        await ProjectService.updateProject(project.id, updatedProject);
+        
+        toast({
+          title: "Task Created", 
+          description: `"${taskData.name}" has been added to your project.`,
+        });
+      }
+    } catch (error) {
+      console.error('Error saving task:', error);
       toast({
-        title: "Task Updated",
-        description: `"${taskData.name}" has been updated successfully.`,
-      });
-    } else {
-      // Create new task
-      const newTask: Task = {
-        ...taskData,
-        id: Date.now().toString()
-      };
-      setProject({ ...project, tasks: [...project.tasks, newTask], lastModified: new Date() });
-      toast({
-        title: "Task Created", 
-        description: `"${taskData.name}" has been added to your project.`,
+        title: "Error",
+        description: "Failed to save task. Please try again.",
+        variant: "destructive"
       });
     }
     setShowTaskForm(false);
@@ -155,6 +201,20 @@ const ProjectDetail = () => {
   const handleUpdateCustomFields = (customFields: Project['customFields']) => {
     setProject({ ...project, customFields, lastModified: new Date() });
   };
+
+  if (!project) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-2">Project not found</h2>
+          <p className="text-muted-foreground">The project could not be loaded.</p>
+          <Button onClick={() => navigate('/projects')} className="mt-4">
+            Back to Projects
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
