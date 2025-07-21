@@ -8,6 +8,21 @@ type ProjectUpdate = Database['public']['Tables']['projects']['Update']
 export class ProjectService {
   // Get all projects for the current user
   static async getUserProjects() {
+    if (!supabase) {
+      // Return sample data when Supabase is not configured
+      return [
+        {
+          id: '1',
+          name: 'Sample Project',
+          description: 'This is a sample project. Connect Supabase to store real data.',
+          status: 'active' as const,
+          createdDate: new Date('2024-01-01'),
+          lastModified: new Date(),
+          teamMembers: ['Demo User']
+        }
+      ];
+    }
+
     const { data, error } = await supabase
       .from('projects')
       .select(`
@@ -39,6 +54,22 @@ export class ProjectService {
 
   // Create a new project
   static async createProject(project: ProjectInsert) {
+    if (!supabase) {
+      // Return mock data when Supabase is not configured
+      const mockProject = {
+        id: Date.now().toString(),
+        name: project.name,
+        description: project.description || '',
+        status: project.status || 'active' as const,
+        createdDate: new Date(),
+        lastModified: new Date(),
+        teamMembers: project.team_members || [],
+        tasks: [],
+        customFields: []
+      };
+      return mockProject;
+    }
+
     const { data, error } = await supabase
       .from('projects')
       .insert([project])
@@ -124,6 +155,8 @@ export class ProjectService {
 
   // Log activity for audit trail
   private static async logActivity(projectId: string, action: string, changes?: any, taskId?: string) {
+    if (!supabase) return; // Skip logging when Supabase is not configured
+    
     const { data: { user } } = await supabase.auth.getUser()
     
     if (user) {
