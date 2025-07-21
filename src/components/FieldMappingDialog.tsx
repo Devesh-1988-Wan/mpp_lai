@@ -68,9 +68,10 @@ export function FieldMappingDialog({ isOpen, onClose, csvHeaders, onConfirm }: F
 
 
   const updateMapping = (appField: string, csvColumn: string) => {
+    const actualValue = csvColumn === '__no_mapping__' ? '' : csvColumn;
     setMappings(prev => prev.map(mapping => 
       mapping.appField === appField 
-        ? { ...mapping, csvColumn }
+        ? { ...mapping, csvColumn: actualValue }
         : mapping
     ));
   };
@@ -133,14 +134,14 @@ export function FieldMappingDialog({ isOpen, onClose, csvHeaders, onConfirm }: F
                 </Label>
                 
                 <Select
-                  value={mappings.find(m => m.appField === appField.value)?.csvColumn || ''}
+                  value={mappings.find(m => m.appField === appField.value)?.csvColumn || '__no_mapping__'}
                   onValueChange={(value) => updateMapping(appField.value, value)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select CSV column" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">-- No mapping --</SelectItem>
+                    <SelectItem value="__no_mapping__">-- No mapping --</SelectItem>
                     {getAvailableColumns(appField.value).map(header => (
                       <SelectItem key={header} value={header}>
                         {header}
