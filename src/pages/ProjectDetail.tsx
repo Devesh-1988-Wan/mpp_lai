@@ -423,9 +423,9 @@ const ProjectDetail = () => {
           <div>
             <ProjectPermissions
               projectId={project.id}
-              teamMembers={project.teamMembers || []}
+              teamMembers={project.team_members || []}
               onUpdateTeamMembers={async (members) => {
-                const updatedProject = { ...project, teamMembers: members, lastModified: new Date() };
+                const updatedProject = { ...project, team_members: members, last_modified: new Date().toISOString() };
                 setProject(updatedProject);
                 await ProjectService.updateProject(project.id, { team_members: members });
               }}

@@ -29,11 +29,11 @@ export interface Project {
   id: string;
   name: string;
   description: string;
-  createdDate: Date;
-  lastModified: Date;
+  created_date: string;  // Updated to match database
+  last_modified: string; // Updated to match database
   status: 'active' | 'completed' | 'archived';
-  tasks: Task[];
-  customFields: CustomField[];
-  teamMembers: string[];
-  created_by?: string;
+  tasks?: Task[];
+  customFields?: CustomField[];
+  team_members: string[]; // Updated to match database
+  created_by: string;     // Updated to match database
 }

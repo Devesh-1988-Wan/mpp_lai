@@ -10,7 +10,7 @@ import { Save, X, Plus, Trash2 } from "lucide-react";
 import { Project } from "@/types/project";
 
 interface ProjectFormProps {
-  onSave: (project: Omit<Project, 'id' | 'createdDate' | 'lastModified'>) => void;
+  onSave: (project: Omit<Project, 'id' | 'created_date' | 'last_modified' | 'created_by'>) => void;
   onCancel: () => void;
   editProject?: Project;
 }
@@ -19,7 +19,7 @@ export function ProjectForm({ onSave, onCancel, editProject }: ProjectFormProps)
   const [name, setName] = useState(editProject?.name || '');
   const [description, setDescription] = useState(editProject?.description || '');
   const [status, setStatus] = useState<Project['status']>(editProject?.status || 'active');
-  const [teamMembers, setTeamMembers] = useState<string[]>(editProject?.teamMembers || []);
+  const [teamMembers, setTeamMembers] = useState<string[]>(editProject?.team_members || []);
   const [newMember, setNewMember] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -29,13 +29,13 @@ export function ProjectForm({ onSave, onCancel, editProject }: ProjectFormProps)
       return;
     }
 
-    const projectData: Omit<Project, 'id' | 'createdDate' | 'lastModified'> = {
+    const projectData: Omit<Project, 'id' | 'created_date' | 'last_modified' | 'created_by'> = {
       name: name.trim(),
       description: description.trim(),
       status,
       tasks: editProject?.tasks || [],
       customFields: editProject?.customFields || [],
-      teamMembers: teamMembers.filter(member => member.trim().length > 0)
+      team_members: teamMembers.filter(member => member.trim().length > 0)
     };
 
     onSave(projectData);

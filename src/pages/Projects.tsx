@@ -5,12 +5,24 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Plus, FolderOpen, Calendar, Users, Archive, Loader2 } from "lucide-react";
-import { format } from "date-fns";
+import { format, isValid, parseISO } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { ProjectForm } from "@/components/ProjectForm";
 import { useToast } from "@/hooks/use-toast";
 import { UserMenu } from "@/components/auth/UserMenu";
 import { useAuth } from "@/contexts/AuthContext";
+
+// Helper function to safely format dates
+const formatDate = (dateString: string | null | undefined): string => {
+  if (!dateString) return 'Unknown';
+  try {
+    const date = new Date(dateString);
+    if (!isValid(date)) return 'Unknown';
+    return format(date, 'MMM dd, yyyy');
+  } catch {
+    return 'Unknown';
+  }
+};
 
 const Projects = () => {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -58,7 +70,7 @@ const Projects = () => {
     setShowProjectForm(true);
   };
 
-  const handleSaveProject = async (projectData: Omit<Project, 'id' | 'createdDate' | 'lastModified'>) => {
+  const handleSaveProject = async (projectData: Omit<Project, 'id' | 'created_date' | 'last_modified' | 'created_by'>) => {
     try {
       if (editingProject) {
         // Update existing project
@@ -66,7 +78,7 @@ const Projects = () => {
           name: projectData.name,
           description: projectData.description,
           status: projectData.status,
-          team_members: projectData.teamMembers
+          team_members: projectData.team_members
         });
         toast({
           title: "Project Updated",
@@ -78,7 +90,7 @@ const Projects = () => {
           name: projectData.name,
           description: projectData.description,
           status: projectData.status,
-          team_members: projectData.teamMembers
+          team_members: projectData.team_members
         });
         toast({
           title: "Project Created",
@@ -217,16 +229,16 @@ const Projects = () => {
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <div className="flex items-center gap-1">
                         <Calendar className="w-4 h-4" />
-                        {format(new Date(project.createdDate), 'MMM dd, yyyy')}
+                        {formatDate(project.created_date)}
                       </div>
                       <div className="flex items-center gap-1">
                         <Users className="w-4 h-4" />
-                        {project.teamMembers?.length || 0}
+                        {project.team_members?.length || 0}
                       </div>
                     </div>
                     
                     <div className="text-sm text-muted-foreground">
-                      Last updated: {format(new Date(project.lastModified), 'MMM dd, yyyy')}
+                      Last updated: {formatDate(project.last_modified)}
                     </div>
 
                     <div className="flex gap-2">
