@@ -4,6 +4,7 @@ import { Task } from "@/types/project";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Edit2, Trash2 } from "lucide-react";
+import { adaptTaskForLegacyComponents } from "@/utils/typeCompatibility";
 
 interface GanttChartProps {
   tasks: Task[];
@@ -12,8 +13,11 @@ interface GanttChartProps {
 }
 
 export function GanttChart({ tasks, onEditTask, onDeleteTask }: GanttChartProps) {
+  // Convert tasks to legacy format for compatibility
+  const adaptedTasks = tasks.map(adaptTaskForLegacyComponents);
+  
   const { dateRange, dayColumns, taskRows } = useMemo(() => {
-    if (tasks.length === 0) {
+    if (adaptedTasks.length === 0) {
       const today = new Date();
       return {
         dateRange: { start: today, end: addDays(today, 30) },
@@ -22,7 +26,7 @@ export function GanttChart({ tasks, onEditTask, onDeleteTask }: GanttChartProps)
       };
     }
 
-    const allDates = tasks.flatMap(task => [task.startDate, task.endDate]);
+    const allDates = adaptedTasks.flatMap(task => [task.startDate, task.endDate]);
     const minDate = new Date(Math.min(...allDates.map(d => d.getTime())));
     const maxDate = new Date(Math.max(...allDates.map(d => d.getTime())));
 
@@ -32,7 +36,7 @@ export function GanttChart({ tasks, onEditTask, onDeleteTask }: GanttChartProps)
     const days = eachDayOfInterval({ start, end });
     const totalDays = days.length;
 
-    const rows = tasks.map(task => {
+    const rows = adaptedTasks.map(task => {
       const taskStart = Math.max(0, differenceInDays(task.startDate, start));
       const taskDuration = differenceInDays(task.endDate, task.startDate) + 1;
       const taskWidth = Math.min(taskDuration, totalDays - taskStart);
@@ -50,7 +54,7 @@ export function GanttChart({ tasks, onEditTask, onDeleteTask }: GanttChartProps)
       dayColumns: days,
       taskRows: rows
     };
-  }, [tasks]);
+  }, [adaptedTasks]);
 
   const getStatusColor = (status: string) => {
     switch (status) {

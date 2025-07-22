@@ -77,7 +77,7 @@ const ProjectDetail = () => {
     const total = project.tasks.length;
     const completed = project.tasks.filter(task => task.status === 'completed').length;
     const inProgress = project.tasks.filter(task => task.status === 'in-progress').length;
-    const milestones = project.tasks.filter(task => task.type === 'milestone').length;
+    const milestones = project.tasks.filter(task => task.task_type === 'milestone').length;
     
     return { total, completed, inProgress, milestones };
   }, [project]);

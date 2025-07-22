@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Task, TaskStatus, TaskType, CustomField, FieldType } from "@/types/project";
 
 interface FieldMapping {

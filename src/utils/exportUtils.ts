@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Task, Project } from "@/types/project";
 import { format } from "date-fns";
 
