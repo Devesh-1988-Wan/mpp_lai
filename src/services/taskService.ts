@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import { Database } from '@/lib/supabase'
+import { generateId } from '@/utils/idGenerator'
 
 type Task = Database['public']['Tables']['tasks']['Row']
 type TaskInsert = Database['public']['Tables']['tasks']['Insert']
@@ -52,13 +53,13 @@ export class TaskService {
   // Create a new task
   static async createTask(task: any) {
     if (!supabase) {
-      // Handle demo mode
+      // Handle demo mode - ensure proper ID generation
       const demoProjects = loadDemoProjects();
       const projectIndex = demoProjects.findIndex(p => p.id === task.project_id);
       
       if (projectIndex !== -1) {
         const newTask = {
-          id: Date.now().toString(),
+          id: generateId(true), // Use demo mode ID generation
           name: task.name,
           description: task.description || '',
           type: task.type || task.task_type || 'task',
@@ -68,13 +69,16 @@ export class TaskService {
           dependencies: task.dependencies || [],
           assignee: task.assignee || '',
           progress: task.progress || 0,
-          customFields: task.custom_fields || task.customFields || {}
+          customFields: task.custom_fields || task.customFields || {},
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         };
         
         if (!demoProjects[projectIndex].tasks) {
           demoProjects[projectIndex].tasks = [];
         }
         demoProjects[projectIndex].tasks.push(newTask);
+        demoProjects[projectIndex].lastModified = new Date();
         saveDemoProjects(demoProjects);
         
         return newTask;
@@ -82,13 +86,31 @@ export class TaskService {
       throw new Error('Project not found');
     }
 
+    // For Supabase mode - let the database generate the UUID automatically
+    const taskData: TaskInsert = {
+      project_id: task.project_id,
+      name: task.name,
+      description: task.description || null,
+      task_type: task.type || task.task_type || 'task',
+      status: task.status || 'not-started',
+      start_date: task.start_date || task.startDate,
+      end_date: task.end_date || task.endDate,
+      assignee: task.assignee || null,
+      progress: task.progress || 0,
+      dependencies: task.dependencies || [],
+      custom_fields: task.custom_fields || task.customFields || {}
+    };
+
     const { data, error } = await supabase
       .from('tasks')
-      .insert([task])
+      .insert([taskData])
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+      console.error('Error creating task:', error);
+      throw error;
+    }
 
     // Log activity
     await this.logActivity(task.project_id, 'task_created', {
@@ -211,17 +233,35 @@ export class TaskService {
       return results;
     }
 
+    // Prepare tasks for Supabase insertion with proper structure
+    const preparedTasks = tasks.map(task => ({
+      project_id: task.project_id,
+      name: task.name,
+      description: task.description || null,
+      task_type: task.type || task.task_type || 'task',
+      status: task.status || 'not-started',
+      start_date: task.start_date || task.startDate,
+      end_date: task.end_date || task.endDate,
+      assignee: task.assignee || null,
+      progress: task.progress || 0,
+      dependencies: task.dependencies || [],
+      custom_fields: task.custom_fields || task.customFields || {}
+    }));
+
     const { data, error } = await supabase
       .from('tasks')
-      .insert(tasks)
+      .insert(preparedTasks)
       .select()
 
-    if (error) throw error
+    if (error) {
+      console.error('Error importing tasks:', error);
+      throw error;
+    }
 
     // Log bulk import activity
-    if (tasks.length > 0) {
-      await this.logActivity(tasks[0].project_id, 'tasks_imported', {
-        count: tasks.length,
+    if (data.length > 0) {
+      await this.logActivity(data[0].project_id, 'tasks_imported', {
+        count: data.length,
         task_names: data.map(t => t.name)
       })
     }

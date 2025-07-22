@@ -124,17 +124,22 @@ const ProjectDetail = () => {
           description: `"${taskData.name}" has been updated successfully.`,
         });
       } else {
-        // Create new task
+        // Create new task with proper ID handling
         const newTaskData = {
           ...taskData,
           project_id: project.id,
           projectId: project.id // Add both for compatibility
         };
         
+        console.log('Creating new task:', newTaskData);
         const createdTask = await TaskService.createTask(newTaskData);
+        console.log('Task created with ID:', createdTask.id);
+        
+        // The database will generate the UUID automatically
         const newTask: Task = {
           ...taskData,
-          id: createdTask.id || Date.now().toString()
+          id: createdTask.id, // Use the ID returned from the database
+          customFields: createdTask.custom_fields || taskData.customFields || {}
         };
         
         const updatedProject = { 
@@ -166,9 +171,24 @@ const ProjectDetail = () => {
 
   const handleImportTasks = async (importedTasks: Omit<Task, 'id'>[]) => {
     try {
-      const newTasks = importedTasks.map(task => ({
+      // Prepare tasks for import with proper structure
+      const tasksToImport = importedTasks.map(task => ({
         ...task,
-        id: Math.random().toString(36).substr(2, 9)
+        project_id: project.id,
+        projectId: project.id
+      }));
+      
+      // Use TaskService to properly import with UUID generation
+      const createdTasks = await TaskService.importTasks(tasksToImport);
+      
+      // Convert created tasks to proper Task format
+      const newTasks: Task[] = createdTasks.map(createdTask => ({
+        ...createdTask,
+        id: createdTask.id,
+        type: createdTask.task_type || 'task',
+        startDate: new Date(createdTask.start_date),
+        endDate: new Date(createdTask.end_date),
+        customFields: createdTask.custom_fields || {}
       }));
       
       const updatedProject = { 
