@@ -1,9 +1,19 @@
 import { supabase } from '@/integrations/supabase/client'
-import { Database } from '@/integrations/supabase/types'
 
-type Project = Database['public']['Tables']['projects']['Row']
-type ProjectInsert = Database['public']['Tables']['projects']['Insert']
-type ProjectUpdate = Database['public']['Tables']['projects']['Update']
+// Define types manually until the auto-generated types are updated
+type Project = {
+  id: string
+  name: string
+  description?: string
+  status: 'active' | 'completed' | 'archived'
+  created_date: string
+  last_modified: string
+  created_by: string
+  team_members: string[]
+}
+
+type ProjectInsert = Omit<Project, 'id' | 'created_date' | 'last_modified' | 'created_by'>
+type ProjectUpdate = Partial<Omit<Project, 'id' | 'created_date' | 'created_by'>>
 
 // LocalStorage key for demo projects
 const DEMO_PROJECTS_KEY = 'lovable-demo-projects';
@@ -153,9 +163,16 @@ export class ProjectService {
       return mockProject;
     }
 
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('User not authenticated')
+
     const { data, error } = await supabase
       .from('projects')
-      .insert([project])
+      .insert([{
+        ...project,
+        created_by: user.id
+      }])
       .select()
       .single()
 
