@@ -34,15 +34,20 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('Inviting user:', { email, projectId, permission });
 
-    // Check if user already exists
-    const { data: existingUser, error: userCheckError } = await supabaseClient.auth.admin.listUsers();
-    
-    if (userCheckError) {
-      console.error('Error checking existing users:', userCheckError);
+    // Check if user already exists by email
+    const { data: existingUser, error: userCheckError } = await supabaseClient
+      .from('profiles')
+      .select('email')
+      .eq('email', email)
+      .single();
+
+    if (userCheckError && userCheckError.code !== 'PGRST116') {
+      console.error('Error checking existing user:', userCheckError);
       throw userCheckError;
     }
 
-    const userExists = existingUser.users.some(user => user.email === email);
+    const userExists = !!existingUser;
+    console.log('User exists:', userExists);
 
     if (!userExists) {
       // Create new user with a temporary password
@@ -54,15 +59,20 @@ const handler = async (req: Request): Promise<Response> => {
 
       if (createError) {
         console.error('Error creating user:', createError);
-        throw createError;
+        // If user already exists (race condition), continue anyway
+        if (!createError.message.includes('already registered')) {
+          throw createError;
+        }
+      } else {
+        console.log('Created new user:', newUser.user?.email);
       }
-
-      console.log('Created new user:', newUser.user?.email);
     }
 
     // Send password reset email to let user set their password
+    const redirectUrl = 'http://localhost:3000/auth/reset-password';
+    
     const { error: resetError } = await supabaseClient.auth.resetPasswordForEmail(email, {
-      redirectTo: `${Deno.env.get('SUPABASE_URL')?.replace('supabase.co', 'supabase.app')}/auth/reset-password`,
+      redirectTo: redirectUrl,
     });
 
     if (resetError) {
