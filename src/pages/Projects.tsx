@@ -9,6 +9,8 @@ import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { ProjectForm } from "@/components/ProjectForm";
 import { useToast } from "@/hooks/use-toast";
+import { UserMenu } from "@/components/auth/UserMenu";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Projects = () => {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -18,6 +20,7 @@ const Projects = () => {
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'completed' | 'archived'>('all');
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
 
   // Load projects on component mount
   useEffect(() => {
@@ -141,12 +144,17 @@ const Projects = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-foreground">Projects</h1>
-              <p className="text-muted-foreground">Manage your project portfolio</p>
+              <p className="text-muted-foreground">
+                Welcome back, {user?.email?.split('@')[0]}! Manage your project portfolio
+              </p>
             </div>
-            <Button onClick={handleCreateProject}>
-              <Plus className="w-4 h-4 mr-2" />
-              New Project
-            </Button>
+            <div className="flex items-center gap-4">
+              <Button onClick={handleCreateProject}>
+                <Plus className="w-4 h-4 mr-2" />
+                New Project
+              </Button>
+              <UserMenu />
+            </div>
           </div>
         </div>
       </div>

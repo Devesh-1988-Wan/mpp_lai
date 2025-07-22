@@ -35,4 +35,5 @@ export interface Project {
   tasks: Task[];
   customFields: CustomField[];
   teamMembers: string[];
+  created_by?: string;
 }

@@ -8,8 +8,11 @@ import { TaskForm } from "@/components/TaskForm";
 import { ImportData } from "@/components/ImportData";
 import { DashboardTabs } from "@/components/DashboardTabs";
 import { CustomFieldsManager } from "@/components/CustomFieldsManager";
+import { ProjectPermissions } from "@/components/ProjectPermissions";
 import { exportToCSV, exportToExcel } from "@/utils/exportUtils";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { UserMenu } from "@/components/auth/UserMenu";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, ArrowLeft, Loader2 } from "lucide-react";
@@ -18,6 +21,7 @@ const ProjectDetail = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
@@ -332,14 +336,16 @@ const ProjectDetail = () => {
       {/* Back Navigation */}
       <div className="border-b bg-card">
         <div className="container mx-auto px-6 py-4">
-          <Button 
-            variant="ghost" 
-            onClick={() => navigate('/projects')}
-            className="mb-4"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Projects
-          </Button>
+          <div className="flex items-center justify-between">
+            <Button 
+              variant="ghost" 
+              onClick={() => navigate('/projects')}
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Projects
+            </Button>
+            <UserMenu />
+          </div>
         </div>
       </div>
 
@@ -372,23 +378,40 @@ const ProjectDetail = () => {
           </Card>
         </div>
 
-        {/* Quick Actions */}
-        <div className="flex gap-2 flex-wrap">
-          <ImportData 
-            onImport={handleImportTasks}
-            onBulkUpdate={handleBulkUpdate}
-            onBulkDelete={handleBulkDelete}
-            existingTasks={project.tasks}
-            customFields={project.customFields}
-          />
-          <CustomFieldsManager 
-            customFields={project.customFields} 
-            onUpdate={handleUpdateCustomFields}
-          />
-          <Button onClick={handleAddTask}>
-            <Plus className="w-4 h-4 mr-2" />
-            Add Task
-          </Button>
+        {/* Team Management and Quick Actions */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-4">
+            <div className="flex gap-2 flex-wrap">
+              <ImportData 
+                onImport={handleImportTasks}
+                onBulkUpdate={handleBulkUpdate}
+                onBulkDelete={handleBulkDelete}
+                existingTasks={project.tasks}
+                customFields={project.customFields}
+              />
+              <CustomFieldsManager 
+                customFields={project.customFields} 
+                onUpdate={handleUpdateCustomFields}
+              />
+              <Button onClick={handleAddTask}>
+                <Plus className="w-4 h-4 mr-2" />
+                Add Task
+              </Button>
+            </div>
+          </div>
+          
+          <div>
+            <ProjectPermissions
+              projectId={project.id}
+              teamMembers={project.teamMembers || []}
+              onUpdateTeamMembers={async (members) => {
+                const updatedProject = { ...project, teamMembers: members, lastModified: new Date() };
+                setProject(updatedProject);
+                await ProjectService.updateProject(project.id, { team_members: members });
+              }}
+              isOwner={user?.id === project.created_by || !project.created_by}
+            />
+          </div>
         </div>
 
         {/* Task Form */}
