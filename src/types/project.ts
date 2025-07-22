@@ -4,25 +4,30 @@ export type FieldType = 'text' | 'number' | 'date' | 'select' | 'boolean';
 
 export interface CustomField {
   id: string;
+  project_id: string;
   name: string;
-  type: FieldType;
+  field_type: FieldType;
   required: boolean;
-  options?: string[]; // For select type
-  defaultValue?: any;
+  options?: any; // For select type (stored as JSONB)
+  default_value?: any;
+  created_at: string;
 }
 
 export interface Task {
   id: string;
+  project_id: string;
   name: string;
-  description: string;
-  type: TaskType;
+  description?: string;
+  task_type: TaskType;
   status: TaskStatus;
-  startDate: Date;
-  endDate: Date;
+  start_date: string;
+  end_date: string;
   dependencies: string[];
-  assignee: string;
+  assignee?: string;
   progress: number; // 0-100
-  customFields?: Record<string, any>; // Custom field values
+  custom_fields?: Record<string, any>; // Custom field values
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Project {

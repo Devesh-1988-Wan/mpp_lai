@@ -10,6 +10,7 @@ import { DashboardTabs } from "@/components/DashboardTabs";
 import { CustomFieldsManager } from "@/components/CustomFieldsManager";
 import { ProjectPermissions } from "@/components/ProjectPermissions";
 import { exportToCSV, exportToExcel } from "@/utils/exportUtils";
+import { generateId } from "@/utils/idGenerator";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { UserMenu } from "@/components/auth/UserMenu";
@@ -135,11 +136,22 @@ const ProjectDetail = () => {
         const createdTask = await TaskService.createTask(newTaskData);
         console.log('Task created with ID:', createdTask.id);
         
-        // The database will generate the UUID automatically
+        // Convert database response to Task type using type casting for now
         const newTask: Task = {
-          ...taskData,
-          id: createdTask.id, // Use the ID returned from the database
-          customFields: createdTask.custom_fields || taskData.customFields || {}
+          id: createdTask.id,
+          project_id: project.id,
+          name: createdTask.name,
+          description: createdTask.description || '',
+          task_type: (createdTask as any).task_type || 'task',
+          status: (createdTask as any).status || 'not-started',
+          start_date: (createdTask as any).start_date || new Date().toISOString().split('T')[0],
+          end_date: (createdTask as any).end_date || new Date().toISOString().split('T')[0],
+          assignee: (createdTask as any).assignee || '',
+          progress: (createdTask as any).progress || 0,
+          dependencies: Array.isArray((createdTask as any).dependencies) ? (createdTask as any).dependencies : [],
+          custom_fields: (createdTask as any).custom_fields || {},
+          created_at: (createdTask as any).created_at || new Date().toISOString(),
+          updated_at: (createdTask as any).updated_at || new Date().toISOString()
         };
         
         const updatedProject = { 

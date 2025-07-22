@@ -1,10 +1,26 @@
-import { supabase } from '@/lib/supabase'
-import { Database } from '@/lib/supabase'
+import { supabase } from '@/integrations/supabase/client'
 import { generateId } from '@/utils/idGenerator'
 
-type Task = Database['public']['Tables']['tasks']['Row']
-type TaskInsert = Database['public']['Tables']['tasks']['Insert']
-type TaskUpdate = Database['public']['Tables']['tasks']['Update']
+// Define types manually until the auto-generated types are updated
+type Task = {
+  id: string
+  project_id: string
+  name: string
+  description?: string
+  task_type: 'task' | 'milestone' | 'deliverable'
+  status: 'not-started' | 'in-progress' | 'completed' | 'on-hold'
+  start_date: string
+  end_date: string
+  assignee?: string
+  progress: number
+  dependencies: string[]
+  custom_fields: Record<string, any>
+  created_at: string
+  updated_at: string
+}
+
+type TaskInsert = Omit<Task, 'id' | 'created_at' | 'updated_at'>
+type TaskUpdate = Partial<Omit<Task, 'id' | 'project_id' | 'created_at'>>
 
 // LocalStorage key for demo projects (to sync with ProjectService)
 const DEMO_PROJECTS_KEY = 'lovable-demo-projects';
@@ -302,7 +318,7 @@ export class TaskService {
 
     if (error) throw error
 
-    if (!task.dependencies || task.dependencies.length === 0) {
+    if (!task.dependencies || !Array.isArray(task.dependencies) || task.dependencies.length === 0) {
       return []
     }
 
@@ -310,7 +326,7 @@ export class TaskService {
       .from('tasks')
       .select('*')
       .eq('project_id', task.project_id)
-      .in('id', task.dependencies)
+      .in('id', task.dependencies as string[])
 
     if (depsError) throw depsError
     return dependencies

@@ -9,25 +9,38 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CalendarIcon, Save, X } from "lucide-react";
 import { format } from "date-fns";
 import { Task, TaskStatus, TaskType, CustomField } from "@/types/project";
+import { cn } from "@/lib/utils";
 
 interface TaskFormProps {
-  onSave: (task: Omit<Task, 'id'>) => void;
+  onSave: (task: Omit<Task, 'id' | 'created_at' | 'updated_at'>) => void;
   onCancel: () => void;
   existingTasks: Task[];
   editTask?: Task;
   customFields?: CustomField[];
 }
 
-export function TaskForm({ onSave, onCancel, existingTasks, editTask, customFields = [] }: TaskFormProps) {
+export const TaskForm: React.FC<TaskFormProps> = ({
+  onSave,
+  onCancel,
+  existingTasks,
+  editTask,
+  customFields = []
+}) => {
   const [name, setName] = useState(editTask?.name || '');
   const [description, setDescription] = useState(editTask?.description || '');
-  const [type, setType] = useState<TaskType>(editTask?.type || 'task');
+  const [taskType, setTaskType] = useState<TaskType>(editTask?.task_type || 'task');
   const [status, setStatus] = useState<TaskStatus>(editTask?.status || 'not-started');
-  const [startDate, setStartDate] = useState<Date>(editTask?.startDate || new Date());
-  const [endDate, setEndDate] = useState<Date>(editTask?.endDate || new Date());
-  const [dependencies, setDependencies] = useState<string[]>(editTask?.dependencies || []);
+  const [startDate, setStartDate] = useState<Date | undefined>(
+    editTask?.start_date ? new Date(editTask.start_date) : undefined
+  );
+  const [endDate, setEndDate] = useState<Date | undefined>(
+    editTask?.end_date ? new Date(editTask.end_date) : undefined
+  );
   const [assignee, setAssignee] = useState(editTask?.assignee || '');
-  const [customFieldValues, setCustomFieldValues] = useState<Record<string, any>>(editTask?.customFields || {});
+  const [progress, setProgress] = useState(editTask?.progress || 0);
+  const [customFieldValues, setCustomFieldValues] = useState<Record<string, any>>(
+    editTask?.custom_fields || {}
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,43 +49,132 @@ export function TaskForm({ onSave, onCancel, existingTasks, editTask, customFiel
       return;
     }
 
-    const taskData: Omit<Task, 'id'> = {
+    const taskData: Omit<Task, 'id' | 'created_at' | 'updated_at'> = {
+      project_id: editTask?.project_id || '',
       name: name.trim(),
       description: description.trim(),
-      type,
+      task_type: taskType,
       status,
-      startDate,
-      endDate,
-      dependencies,
+      start_date: startDate.toISOString().split('T')[0], // Convert to YYYY-MM-DD format
+      end_date: endDate.toISOString().split('T')[0],
       assignee: assignee.trim(),
-      progress: editTask?.progress || 0,
-      customFields: customFieldValues
+      progress,
+      dependencies: editTask?.dependencies || [],
+      custom_fields: customFieldValues
     };
 
     onSave(taskData);
   };
 
-  const handleCustomFieldChange = (fieldId: string, value: any) => {
-    setCustomFieldValues(prev => ({
-      ...prev,
-      [fieldId]: value
-    }));
+  const renderCustomField = (field: CustomField) => {
+    const value = customFieldValues[field.id] || field.default_value || '';
+
+    switch (field.field_type) {
+      case 'text':
+        return (
+          <Input
+            value={value}
+            onChange={(e) => setCustomFieldValues(prev => ({
+              ...prev,
+              [field.id]: e.target.value
+            }))}
+            placeholder={`Enter ${field.name}`}
+          />
+        );
+
+      case 'number':
+        return (
+          <Input
+            type="number"
+            value={value}
+            onChange={(e) => setCustomFieldValues(prev => ({
+              ...prev,
+              [field.id]: parseFloat(e.target.value) || 0
+            }))}
+            placeholder={`Enter ${field.name}`}
+          />
+        );
+
+      case 'date':
+        return (
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className={cn("justify-start text-left font-normal", !value && "text-muted-foreground")}>
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {value ? format(new Date(value), "PPP") : `Pick ${field.name}`}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0">
+              <Calendar
+                mode="single"
+                selected={value ? new Date(value) : undefined}
+                onSelect={(date) => setCustomFieldValues(prev => ({
+                  ...prev,
+                  [field.id]: date ? date.toISOString().split('T')[0] : ''
+                }))}
+                initialFocus
+                className="pointer-events-auto"
+              />
+            </PopoverContent>
+          </Popover>
+        );
+
+      case 'select':
+        const options = Array.isArray(field.options) ? field.options : [];
+        return (
+          <Select
+            value={value}
+            onValueChange={(newValue) => setCustomFieldValues(prev => ({
+              ...prev,
+              [field.id]: newValue
+            }))}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder={`Select ${field.name}`} />
+            </SelectTrigger>
+            <SelectContent>
+              {options.map((option: any, index: number) => (
+                <SelectItem key={index} value={String(option)}>
+                  {String(option)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        );
+
+      case 'boolean':
+        return (
+          <Select
+            value={String(value)}
+            onValueChange={(newValue) => setCustomFieldValues(prev => ({
+              ...prev,
+              [field.id]: newValue === 'true'
+            }))}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="true">Yes</SelectItem>
+              <SelectItem value="false">No</SelectItem>
+            </SelectContent>
+          </Select>
+        );
+
+      default:
+        return null;
+    }
   };
 
-  const availableDependencies = existingTasks.filter(task => task.id !== editTask?.id);
-
   return (
-    <div className="bg-card rounded-lg border p-6 space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">{editTask ? 'Edit Task' : 'New Task'}</h3>
-        <Button variant="ghost" size="icon" onClick={onCancel}>
-          <X className="w-4 h-4" />
-        </Button>
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
+    <div className="bg-card border rounded-lg p-6 shadow-sm">
+      <h3 className="text-lg font-semibold mb-4">
+        {editTask ? 'Edit Task' : 'Create New Task'}
+      </h3>
+      
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
             <Label htmlFor="name">Task Name *</Label>
             <Input
               id="name"
@@ -83,9 +185,19 @@ export function TaskForm({ onSave, onCancel, existingTasks, editTask, customFiel
             />
           </div>
 
-          <div className="space-y-2">
+          <div>
+            <Label htmlFor="assignee">Assignee</Label>
+            <Input
+              id="assignee"
+              value={assignee}
+              onChange={(e) => setAssignee(e.target.value)}
+              placeholder="Enter assignee"
+            />
+          </div>
+
+          <div>
             <Label htmlFor="type">Type</Label>
-            <Select value={type} onValueChange={(value: TaskType) => setType(value)}>
+            <Select value={taskType} onValueChange={(value: TaskType) => setTaskType(value)}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -96,21 +208,8 @@ export function TaskForm({ onSave, onCancel, existingTasks, editTask, customFiel
               </SelectContent>
             </Select>
           </div>
-        </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="description">Description</Label>
-          <Textarea
-            id="description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Enter task description"
-            rows={3}
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
+          <div>
             <Label htmlFor="status">Status</Label>
             <Select value={status} onValueChange={(value: TaskStatus) => setStatus(value)}>
               <SelectTrigger>
@@ -125,169 +224,107 @@ export function TaskForm({ onSave, onCancel, existingTasks, editTask, customFiel
             </Select>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="assignee">Assignee</Label>
-            <Input
-              id="assignee"
-              value={assignee}
-              onChange={(e) => setAssignee(e.target.value)}
-              placeholder="Enter assignee name"
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
+          <div>
             <Label>Start Date *</Label>
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" className="w-full justify-start">
-                  <CalendarIcon className="w-4 h-4 mr-2" />
-                  {startDate ? format(startDate, "MMM dd, yyyy") : "Select date"}
+                <Button
+                  variant="outline"
+                  className={cn("justify-start text-left font-normal", !startDate && "text-muted-foreground")}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {startDate ? format(startDate, "PPP") : "Pick start date"}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0">
                 <Calendar
                   mode="single"
                   selected={startDate}
-                  onSelect={(date) => date && setStartDate(date)}
+                  onSelect={setStartDate}
                   initialFocus
+                  className="pointer-events-auto"
                 />
               </PopoverContent>
             </Popover>
           </div>
 
-          <div className="space-y-2">
+          <div>
             <Label>End Date *</Label>
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" className="w-full justify-start">
-                  <CalendarIcon className="w-4 h-4 mr-2" />
-                  {endDate ? format(endDate, "MMM dd, yyyy") : "Select date"}
+                <Button
+                  variant="outline"
+                  className={cn("justify-start text-left font-normal", !endDate && "text-muted-foreground")}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {endDate ? format(endDate, "PPP") : "Pick end date"}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0">
                 <Calendar
                   mode="single"
                   selected={endDate}
-                  onSelect={(date) => date && setEndDate(date)}
+                  onSelect={setEndDate}
                   initialFocus
+                  className="pointer-events-auto"
                 />
               </PopoverContent>
             </Popover>
           </div>
+
+          <div>
+            <Label htmlFor="progress">Progress (%)</Label>
+            <Input
+              id="progress"
+              type="number"
+              min="0"
+              max="100"
+              value={progress}
+              onChange={(e) => setProgress(parseInt(e.target.value) || 0)}
+              placeholder="0-100"
+            />
+          </div>
         </div>
 
-        {availableDependencies.length > 0 && (
-          <div className="space-y-2">
-            <Label>Dependencies</Label>
-            <Select 
-              value={dependencies.join(',')} 
-              onValueChange={(value) => setDependencies(value ? value.split(',') : [])}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select dependent tasks" />
-              </SelectTrigger>
-              <SelectContent>
-                {availableDependencies.map((task) => (
-                  <SelectItem key={task.id} value={task.id}>
-                    {task.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          )}
+        <div>
+          <Label htmlFor="description">Description</Label>
+          <Textarea
+            id="description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Enter task description"
+            rows={3}
+          />
+        </div>
 
-          {/* Custom Fields */}
-          {customFields.length > 0 && (
-            <div className="space-y-4 border-t pt-4">
-              <h3 className="font-medium">Custom Fields</h3>
+        {/* Custom Fields */}
+        {customFields.length > 0 && (
+          <div>
+            <h4 className="text-md font-medium mb-3">Custom Fields</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {customFields.map((field) => (
-                <div key={field.id} className="space-y-2">
-                  <Label htmlFor={`custom-${field.id}`}>
-                    {field.name}
-                    {field.required && <span className="text-destructive ml-1">*</span>}
+                <div key={field.id}>
+                  <Label htmlFor={field.id}>
+                    {field.name} {field.required && '*'}
                   </Label>
-                  
-                  {field.type === 'text' && (
-                    <Input
-                      id={`custom-${field.id}`}
-                      value={customFieldValues[field.id] || ''}
-                      onChange={(e) => handleCustomFieldChange(field.id, e.target.value)}
-                      placeholder={`Enter ${field.name.toLowerCase()}`}
-                      required={field.required}
-                    />
-                  )}
-                  
-                  {field.type === 'number' && (
-                    <Input
-                      id={`custom-${field.id}`}
-                      type="number"
-                      value={customFieldValues[field.id] || ''}
-                      onChange={(e) => handleCustomFieldChange(field.id, parseFloat(e.target.value) || '')}
-                      placeholder={`Enter ${field.name.toLowerCase()}`}
-                      required={field.required}
-                    />
-                  )}
-                  
-                  {field.type === 'select' && field.options && (
-                    <Select 
-                      value={customFieldValues[field.id] || ''} 
-                      onValueChange={(value) => handleCustomFieldChange(field.id, value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder={`Select ${field.name.toLowerCase()}`} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {field.options.map((option) => (
-                          <SelectItem key={option} value={option}>
-                            {option}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                  
-                  {field.type === 'boolean' && (
-                    <div className="flex items-center space-x-2">
-                      <input
-                        id={`custom-${field.id}`}
-                        type="checkbox"
-                        checked={customFieldValues[field.id] || false}
-                        onChange={(e) => handleCustomFieldChange(field.id, e.target.checked)}
-                        className="rounded border-input"
-                      />
-                      <Label htmlFor={`custom-${field.id}`} className="text-sm font-normal">
-                        Yes
-                      </Label>
-                    </div>
-                  )}
-                  
-                  {field.type === 'date' && (
-                    <Input
-                      id={`custom-${field.id}`}
-                      type="date"
-                      value={customFieldValues[field.id] || ''}
-                      onChange={(e) => handleCustomFieldChange(field.id, e.target.value)}
-                      required={field.required}
-                    />
-                  )}
+                  {renderCustomField(field)}
                 </div>
               ))}
             </div>
-          )}
+          </div>
+        )}
 
-        <div className="flex justify-end space-x-2 pt-4">
-          <Button type="button" variant="outline" onClick={onCancel}>
-            Cancel
-          </Button>
+        <div className="flex gap-2 pt-4">
           <Button type="submit">
             <Save className="w-4 h-4 mr-2" />
-            {editTask ? 'Update' : 'Create'} Task
+            {editTask ? 'Update Task' : 'Create Task'}
+          </Button>
+          <Button type="button" variant="outline" onClick={onCancel}>
+            <X className="w-4 h-4 mr-2" />
+            Cancel
           </Button>
         </div>
       </form>
     </div>
   );
-}
+};
