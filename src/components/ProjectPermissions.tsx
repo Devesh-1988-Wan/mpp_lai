@@ -22,6 +22,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Users, Plus, X } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ProjectPermissionsProps {
   projectId: string;
@@ -41,7 +42,7 @@ export const ProjectPermissions: React.FC<ProjectPermissionsProps> = ({
   const [permission, setPermission] = useState<'view' | 'edit'>('view');
   const { toast } = useToast();
 
-  const handleAddMember = () => {
+  const handleAddMember = async () => {
     if (!newMemberEmail.trim()) return;
 
     const memberWithPermission = `${newMemberEmail}:${permission}`;
@@ -55,17 +56,39 @@ export const ProjectPermissions: React.FC<ProjectPermissionsProps> = ({
       return;
     }
 
-    const updatedMembers = [...teamMembers, memberWithPermission];
-    onUpdateTeamMembers(updatedMembers);
-    
-    toast({
-      title: "Member added",
-      description: `${newMemberEmail} has been added with ${permission} permissions.`,
-    });
+    try {
+      // Call the invite-user edge function
+      const { data, error } = await supabase.functions.invoke('invite-user', {
+        body: {
+          email: newMemberEmail,
+          projectId,
+          permission,
+        },
+      });
 
-    setNewMemberEmail('');
-    setPermission('view');
-    setIsOpen(false);
+      if (error) {
+        throw error;
+      }
+
+      const updatedMembers = [...teamMembers, memberWithPermission];
+      onUpdateTeamMembers(updatedMembers);
+      
+      toast({
+        title: "Member invited",
+        description: `${newMemberEmail} has been invited and will receive a password reset email to set up their account.`,
+      });
+
+      setNewMemberEmail('');
+      setPermission('view');
+      setIsOpen(false);
+    } catch (error: any) {
+      console.error('Error inviting user:', error);
+      toast({
+        title: "Invitation failed",
+        description: error.message || "Failed to invite user. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleRemoveMember = (memberToRemove: string) => {
