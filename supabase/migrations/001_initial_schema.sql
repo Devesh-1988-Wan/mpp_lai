@@ -58,38 +58,46 @@ ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE activity_log ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for projects
-CREATE POLICY "Users can view projects they created or are team members of" ON projects
+CREATE POLICY "Users can view projects they are part of or if they are admin" ON projects
   FOR SELECT USING (
-    created_by = auth.uid() OR 
+    public.has_role(auth.uid(), 'admin') OR
+    created_by = auth.uid() OR
     auth.uid()::text = ANY(SELECT jsonb_array_elements_text(team_members))
   );
 
 CREATE POLICY "Users can create projects" ON projects
   FOR INSERT WITH CHECK (created_by = auth.uid());
 
-CREATE POLICY "Users can update projects they created" ON projects
-  FOR UPDATE USING (created_by = auth.uid());
+CREATE POLICY "Users can update projects they created or if they are admin" ON projects
+  FOR UPDATE USING (
+    public.has_role(auth.uid(), 'admin') OR
+    created_by = auth.uid()
+  );
 
-CREATE POLICY "Users can delete projects they created" ON projects
-  FOR DELETE USING (created_by = auth.uid());
+CREATE POLICY "Users can delete projects they created or if they are admin" ON projects
+  FOR DELETE USING (
+    public.has_role(auth.uid(), 'admin') OR
+    created_by = auth.uid()
+  );
 
 -- RLS Policies for custom_fields
 CREATE POLICY "Users can view custom fields for accessible projects" ON custom_fields
   FOR SELECT USING (
     EXISTS (
-      SELECT 1 FROM projects 
-      WHERE projects.id = custom_fields.project_id 
-      AND (projects.created_by = auth.uid() OR 
-           auth.uid()::text = ANY(SELECT jsonb_array_elements_text(projects.team_members)))
+      SELECT 1 FROM projects
+      WHERE projects.id = custom_fields.project_id
     )
   );
 
-CREATE POLICY "Users can manage custom fields for projects they created" ON custom_fields
+CREATE POLICY "Users can manage custom fields for projects they created or are admin" ON custom_fields
   FOR ALL USING (
     EXISTS (
-      SELECT 1 FROM projects 
-      WHERE projects.id = custom_fields.project_id 
-      AND projects.created_by = auth.uid()
+      SELECT 1 FROM projects
+      WHERE projects.id = custom_fields.project_id
+      AND (
+        projects.created_by = auth.uid() OR
+        public.has_role(auth.uid(), 'admin')
+      )
     )
   );
 
@@ -97,20 +105,16 @@ CREATE POLICY "Users can manage custom fields for projects they created" ON cust
 CREATE POLICY "Users can view tasks for accessible projects" ON tasks
   FOR SELECT USING (
     EXISTS (
-      SELECT 1 FROM projects 
-      WHERE projects.id = tasks.project_id 
-      AND (projects.created_by = auth.uid() OR 
-           auth.uid()::text = ANY(SELECT jsonb_array_elements_text(projects.team_members)))
+      SELECT 1 FROM projects
+      WHERE projects.id = tasks.project_id
     )
   );
 
 CREATE POLICY "Users can manage tasks for accessible projects" ON tasks
   FOR ALL USING (
     EXISTS (
-      SELECT 1 FROM projects 
-      WHERE projects.id = tasks.project_id 
-      AND (projects.created_by = auth.uid() OR 
-           auth.uid()::text = ANY(SELECT jsonb_array_elements_text(projects.team_members)))
+      SELECT 1 FROM projects
+      WHERE projects.id = tasks.project_id
     )
   );
 
@@ -118,12 +122,11 @@ CREATE POLICY "Users can manage tasks for accessible projects" ON tasks
 CREATE POLICY "Users can view activity for accessible projects" ON activity_log
   FOR SELECT USING (
     EXISTS (
-      SELECT 1 FROM projects 
-      WHERE projects.id = activity_log.project_id 
-      AND (projects.created_by = auth.uid() OR 
-           auth.uid()::text = ANY(SELECT jsonb_array_elements_text(projects.team_members)))
+      SELECT 1 FROM projects
+      WHERE projects.id = activity_log.project_id
     )
   );
+
 
 CREATE POLICY "Users can create activity logs" ON activity_log
   FOR INSERT WITH CHECK (user_id = auth.uid());
