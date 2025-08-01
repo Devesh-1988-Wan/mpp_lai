@@ -69,7 +69,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Send password reset email to let user set their password
-    const redirectUrl = 'http://localhost:3000/auth/reset-password';
+    const redirectUrl = 'http://localhost:3000/';
     
     const { error: resetError } = await supabaseClient.auth.resetPasswordForEmail(email, {
       redirectTo: redirectUrl,
