@@ -22,7 +22,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Users, Plus, X } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 
 interface ProjectPermissionsProps {
   projectId: string;
@@ -43,7 +43,7 @@ export const ProjectPermissions: React.FC<ProjectPermissionsProps> = ({
   const { toast } = useToast();
 
   const handleAddMember = async () => {
-    if (!newMemberEmail.trim()) return;
+    if (!newMemberEmail.trim() || !supabase) return;
 
     const memberWithPermission = `${newMemberEmail}:${permission}`;
     

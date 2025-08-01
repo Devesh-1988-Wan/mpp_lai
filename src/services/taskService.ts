@@ -1,4 +1,4 @@
-import { supabase } from '@/integrations/supabase/client'
+import { supabase } from '@/lib/supabase'
 import { generateId } from '@/utils/idGenerator'
 
 // Define types manually until the auto-generated types are updated
@@ -78,14 +78,14 @@ export class TaskService {
           id: generateId(true), // Use demo mode ID generation
           name: task.name,
           description: task.description || '',
-          type: task.type || task.task_type || 'task',
+          task_type: task.task_type || 'task',
           status: task.status || 'not-started',
-          startDate: new Date(task.start_date || task.startDate),
-          endDate: new Date(task.end_date || task.endDate),
+          start_date: new Date(task.start_date).toISOString(),
+          end_date: new Date(task.end_date).toISOString(),
           dependencies: task.dependencies || [],
           assignee: task.assignee || '',
           progress: task.progress || 0,
-          customFields: task.custom_fields || task.customFields || {},
+          custom_fields: task.custom_fields || {},
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         };
@@ -107,14 +107,14 @@ export class TaskService {
       project_id: task.project_id,
       name: task.name,
       description: task.description || null,
-      task_type: task.type || task.task_type || 'task',
+      task_type: task.task_type || 'task',
       status: task.status || 'not-started',
-      start_date: task.start_date || task.startDate,
-      end_date: task.end_date || task.endDate,
+      start_date: task.start_date,
+      end_date: task.end_date,
       assignee: task.assignee || null,
       progress: task.progress || 0,
       dependencies: task.dependencies || [],
-      custom_fields: task.custom_fields || task.customFields || {}
+      custom_fields: task.custom_fields || {}
     };
 
     const { data, error } = await supabase
@@ -254,14 +254,14 @@ export class TaskService {
       project_id: task.project_id,
       name: task.name,
       description: task.description || null,
-      task_type: task.type || task.task_type || 'task',
+      task_type: task.task_type || 'task',
       status: task.status || 'not-started',
-      start_date: task.start_date || task.startDate,
-      end_date: task.end_date || task.endDate,
+      start_date: task.start_date,
+      end_date: task.end_date,
       assignee: task.assignee || null,
       progress: task.progress || 0,
       dependencies: task.dependencies || [],
-      custom_fields: task.custom_fields || task.customFields || {}
+      custom_fields: task.custom_fields || {}
     }));
 
     const { data, error } = await supabase
