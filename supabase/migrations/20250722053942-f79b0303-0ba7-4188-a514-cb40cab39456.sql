@@ -1,4 +1,6 @@
 -- Update the handle_new_user function to automatically assign admin role to specific email
+-- NOTE: For production environments, it is recommended to implement a more robust role management system
+-- rather than hardcoding admin emails in a database trigger.
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER
 LANGUAGE plpgsql

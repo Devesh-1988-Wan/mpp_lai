@@ -13,7 +13,6 @@ interface InviteUserRequest {
 }
 
 const handler = async (req: Request): Promise<Response> => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -29,12 +28,17 @@ const handler = async (req: Request): Promise<Response> => {
         }
       }
     );
+    
+    // Get the site URL from environment variables for the redirect
+    const siteUrl = Deno.env.get('SITE_URL');
+    if (!siteUrl) {
+      throw new Error("SITE_URL environment variable is not set.");
+    }
 
     const { email, projectId, permission }: InviteUserRequest = await req.json();
 
     console.log('Inviting user:', { email, projectId, permission });
 
-    // Check if user already exists by email
     const { data: existingUser, error: userCheckError } = await supabaseClient
       .from('profiles')
       .select('email')
@@ -50,16 +54,14 @@ const handler = async (req: Request): Promise<Response> => {
     console.log('User exists:', userExists);
 
     if (!userExists) {
-      // Create new user with a temporary password
       const { data: newUser, error: createError } = await supabaseClient.auth.admin.createUser({
         email,
-        password: crypto.randomUUID(), // Temporary password
-        email_confirm: true, // Auto-confirm email
+        password: crypto.randomUUID(),
+        email_confirm: true,
       });
 
       if (createError) {
         console.error('Error creating user:', createError);
-        // If user already exists (race condition), continue anyway
         if (!createError.message.includes('already registered')) {
           throw createError;
         }
@@ -68,11 +70,8 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    // Send password reset email to let user set their password
-    const redirectUrl = 'http://localhost:3000/';
-    
     const { error: resetError } = await supabaseClient.auth.resetPasswordForEmail(email, {
-      redirectTo: redirectUrl,
+      redirectTo: siteUrl,
     });
 
     if (resetError) {
