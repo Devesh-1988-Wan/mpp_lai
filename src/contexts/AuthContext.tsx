@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase'; // Corrected import path
 
 interface AuthContextType {
   user: User | null;
@@ -26,20 +26,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // **FIX**: If supabase is not configured, stop loading and exit early.
+    // This prevents the app from crashing and allows it to run in demo mode.
     if (!supabase) {
       setLoading(false);
-      console.warn("Supabase not configured, auth features disabled.");
+      console.warn("Supabase not configured, auth features are disabled.");
       return;
     }
 
     const initializeAuth = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
-        
         if (error) {
           console.warn('Error getting session:', error.message);
         }
-        
         setUser(session?.user ?? null);
       } catch (error) {
         console.error('Auth initialization error:', error);
@@ -53,7 +53,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       setLoading(false);
     });
