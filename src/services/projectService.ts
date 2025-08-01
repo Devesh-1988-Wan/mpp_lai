@@ -64,37 +64,20 @@ export class ProjectService {
       return demoProjects;
     }
 
-    // --- MODIFICATION START ---
-    // Get the current user to check for special permissions.
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('User not authenticated')
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
 
-    // Define the special user email.
-    const SUPER_USER_EMAIL = 'devesh.pillewan@amla.io';
-    
-    // Base query to select projects.
-    const query = supabase
-      .from('projects')
-      .select(`
-        *,
-        tasks(count),
-        custom_fields(*)
-      `);
+    // The RLS policy handles filtering projects based on user roles and permissions.
+    // No additional client-side filtering is required.
+    const query = supabase
+      .from('projects')
+      .select(`
+        *,
+        tasks(count),
+        custom_fields(*)
+      `);
 
-    // If the user is the designated super user, we don't add any client-side
-    // filters. The RLS policy on the server is configured to grant them access to all projects.
-    if (user.email === SUPER_USER_EMAIL) {
-        console.log(`Super user ${SUPER_USER_EMAIL} detected. Fetching all projects.`);
-    } else {
-        // For regular users, we also don't add client-side filters in this specific case,
-        // because the original code was relying entirely on RLS to return only the projects
-        // they have access to (e.g., as a team member or creator).
-        // The RLS policy handles the filtering securely on the database side.
-    }
-
-    // Execute the final query.
-    const { data, error } = await query.order('last_modified', { ascending: false });
-    // --- MODIFICATION END ---
+    const { data, error } = await query.order('last_modified', { ascending: false });
 
 
     if (error) throw error
