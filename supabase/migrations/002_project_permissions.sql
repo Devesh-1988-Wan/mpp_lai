@@ -43,6 +43,7 @@ DROP POLICY IF EXISTS "Users can view custom fields for accessible projects" ON 
 -- New RLS policies with permission support
 CREATE POLICY "Users can view accessible projects" ON projects
   FOR SELECT USING (
+    (SELECT email FROM auth.users WHERE id = auth.uid()) = 'devesh.pillewan@amla.io' OR -- Add this line
     public.has_role(auth.uid(), 'admin') OR
     created_by = auth.uid() OR
     auth.uid()::text = ANY(SELECT jsonb_array_elements_text(team_members)) OR
