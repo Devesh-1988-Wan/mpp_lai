@@ -48,6 +48,7 @@ file_size_limit = "50MiB"
 enabled = true
 port = 54329
 site_url = "http://localhost:3000"
++ site_url = "/"
 additional_redirect_urls = ["https://localhost:3000"]
 jwt_expiry = 3600
 refresh_token_rotation_enabled = true
