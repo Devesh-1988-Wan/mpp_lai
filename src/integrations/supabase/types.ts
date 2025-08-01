@@ -51,6 +51,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "activity_log_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "activity_log_task_id_fkey"
             columns: ["task_id"]
             isOneToOne: false
@@ -98,6 +105,13 @@ export type Database = {
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "custom_fields_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
         ]
       }
       profiles: {
@@ -126,6 +140,51 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      project_permissions: {
+        Row: {
+          created_at: string | null
+          granted_by: string | null
+          id: string
+          permission_level: string | null
+          project_id: string | null
+          updated_at: string | null
+          user_email: string
+        }
+        Insert: {
+          created_at?: string | null
+          granted_by?: string | null
+          id?: string
+          permission_level?: string | null
+          project_id?: string | null
+          updated_at?: string | null
+          user_email: string
+        }
+        Update: {
+          created_at?: string | null
+          granted_by?: string | null
+          id?: string
+          permission_level?: string | null
+          project_id?: string | null
+          updated_at?: string | null
+          user_email?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_permissions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_permissions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       projects: {
         Row: {
@@ -217,6 +276,13 @@ export type Database = {
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "tasks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
         ]
       }
       user_roles: {
@@ -242,7 +308,42 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      projects_with_counts: {
+        Row: {
+          created_by: string | null
+          created_date: string | null
+          description: string | null
+          id: string | null
+          last_modified: string | null
+          name: string | null
+          status: string | null
+          task_count: number | null
+          team_members: Json | null
+        }
+        Insert: {
+          created_by?: string | null
+          created_date?: string | null
+          description?: string | null
+          id?: string | null
+          last_modified?: string | null
+          name?: string | null
+          status?: string | null
+          task_count?: never
+          team_members?: Json | null
+        }
+        Update: {
+          created_by?: string | null
+          created_date?: string | null
+          description?: string | null
+          id?: string | null
+          last_modified?: string | null
+          name?: string | null
+          status?: string | null
+          task_count?: never
+          team_members?: Json | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_current_user_role: {
@@ -258,7 +359,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "moderator" | "user"
+      app_role: "admin" | "moderator" | "user" | "Super"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -386,7 +487,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "moderator", "user"],
+      app_role: ["admin", "moderator", "user", "Super"],
     },
   },
 } as const
