@@ -71,7 +71,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const { error: resetError } = await supabaseClient.auth.resetPasswordForEmail(email, {
-      redirectTo: siteUrl,
+      redirectTo: '/',
     });
 
     if (resetError) {

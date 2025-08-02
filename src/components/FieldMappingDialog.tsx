@@ -22,10 +22,10 @@ interface FieldMappingDialogProps {
 
 const APP_FIELDS = [
   { value: 'name', label: 'Task Name', required: true },
-  { value: 'type', label: 'Type', required: false },
+  { value: 'task_type', label: 'Type', required: false },
   { value: 'status', label: 'Status', required: false },
-  { value: 'startDate', label: 'Start Date', required: true },
-  { value: 'endDate', label: 'End Date', required: true },
+  { value: 'start_date', label: 'Start Date', required: true },
+  { value: 'end_date', label: 'End Date', required: true },
   { value: 'assignee', label: 'Assignee', required: false },
   { value: 'progress', label: 'Progress (%)', required: false },
   { value: 'dependencies', label: 'Dependencies', required: false },
@@ -37,10 +37,10 @@ const findBestMatch = (headers: string[], fieldName: string): string | null => {
   
   const matchPatterns: Record<string, string[]> = {
     name: ['task name', 'name', 'title'],
-    type: ['type', 'task type'],
+    task_type: ['type', 'task type'],
     status: ['status', 'task status'],
-    startDate: ['start date', 'start', 'start_date'],
-    endDate: ['end date', 'end', 'end_date', 'due date'],
+    start_date: ['start date', 'start', 'start_date'],
+    end_date: ['end date', 'end', 'end_date', 'due date'],
     assignee: ['assignee', 'assigned to', 'owner'],
     progress: ['progress', 'progress (%)', 'completion'],
     dependencies: ['dependencies', 'depends on'],
@@ -66,7 +66,6 @@ export function FieldMappingDialog({
   onConfirm 
 }: FieldMappingDialogProps) {
   const [mappings, setMappings] = useState<FieldMapping[]>(() => {
-    // Create mappings for standard fields
     const standardMappings = APP_FIELDS.map(appField => {
       const csvColumn = findBestMatch(csvHeaders, appField.value);
       return {
@@ -75,7 +74,6 @@ export function FieldMappingDialog({
       };
     });
     
-    // Create mappings for custom fields
     const customMappings = customFields.map(customField => {
       const csvColumn = findBestMatch(csvHeaders, customField.name.toLowerCase());
       return {
@@ -114,7 +112,6 @@ export function FieldMappingDialog({
     const validMappings = mappings.filter(m => m.csvColumn !== '');
     
     if (importMode === 'delete') {
-      // For delete mode, only need task name
       const nameMapping = validMappings.find(m => m.appField === 'name');
       if (!nameMapping) {
         alert('Please map the Task Name field for deletion');
@@ -124,10 +121,8 @@ export function FieldMappingDialog({
       return;
     }
     
-    // Check if required fields are mapped for create/update modes
     let requiredFields = APP_FIELDS.filter(f => f.required).map(f => f.value);
     
-    // Add required custom fields
     const requiredCustomFields = customFields
       .filter(f => f.required)
       .map(f => `custom_${f.id}`);
@@ -174,9 +169,7 @@ export function FieldMappingDialog({
           </p>
           
           <div className="space-y-3">
-            {/* Standard Fields */}
             {APP_FIELDS.map(appField => {
-              // For delete mode, only show required fields (mainly task name)
               if (importMode === 'delete' && !appField.required) return null;
               
               return (
@@ -206,7 +199,6 @@ export function FieldMappingDialog({
               );
             })}
             
-            {/* Custom Fields */}
             {importMode !== 'delete' && customFields.length > 0 && (
               <>
                 <div className="border-t pt-4">
@@ -217,7 +209,7 @@ export function FieldMappingDialog({
                     <Label className="text-sm font-medium">
                       {customField.name}
                       {customField.required && <span className="text-destructive ml-1">*</span>}
-                      <span className="text-xs text-muted-foreground ml-1">({customField.type})</span>
+                      <span className="text-xs text-muted-foreground ml-1">({customField.field_type})</span>
                     </Label>
                     
                     <Select

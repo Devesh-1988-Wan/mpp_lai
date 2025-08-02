@@ -346,6 +346,18 @@ export type Database = {
       }
     }
     Functions: {
+      can_edit_project: {
+        Args: { project_id_to_check: string }
+        Returns: boolean
+      }
+      can_view_project: {
+        Args: { project_id_to_check: string }
+        Returns: boolean
+      }
+      check_user_project_permission: {
+        Args: { p_project_id: string }
+        Returns: boolean
+      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["app_role"]
@@ -359,7 +371,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "moderator" | "user" | "Super"
+      app_role: "admin" | "moderator" | "user" | "Super" | "super_admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -487,7 +499,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "moderator", "user", "Super"],
+      app_role: ["admin", "moderator", "user", "Super", "super_admin"],
     },
   },
 } as const

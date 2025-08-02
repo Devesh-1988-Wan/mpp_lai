@@ -123,18 +123,13 @@ BEGIN
     COALESCE(NEW.raw_user_meta_data ->> 'display_name', NEW.email)
   );
 
-  IF NEW.email = 'devesh.pillewan@amla.io' THEN
-    INSERT INTO public.user_roles (user_id, role)
-    VALUES (NEW.id, 'admin');
-  ELSE
-    INSERT INTO public.user_roles (user_id, role)
-    VALUES (NEW.id, 'user');
-  END IF;
+  -- Set default role as 'user' for all new users
+  INSERT INTO public.user_roles (user_id, role)
+  VALUES (NEW.id, 'user');
 
   RETURN NEW;
 END;
 $$;
-
 -- Trigger to automatically create profile and assign role on user signup
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created

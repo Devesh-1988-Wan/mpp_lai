@@ -1,9 +1,18 @@
 import { supabase } from '@/lib/supabase'
-import { Database } from '@/lib/supabase'
 
-type CustomField = Database['public']['Tables']['custom_fields']['Row']
-type CustomFieldInsert = Database['public']['Tables']['custom_fields']['Insert']
-type CustomFieldUpdate = Database['public']['Tables']['custom_fields']['Update']
+type CustomField = {
+  id: string;
+  project_id: string;
+  name: string;
+  field_type: string;
+  required: boolean;
+  default_value?: string;
+  options?: any;
+  created_at?: string;
+}
+
+type CustomFieldInsert = Omit<CustomField, 'id' | 'created_at'>
+type CustomFieldUpdate = Partial<CustomFieldInsert>
 
 export class CustomFieldService {
   // Get all custom fields for a project
