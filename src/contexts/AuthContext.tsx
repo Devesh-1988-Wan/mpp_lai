@@ -65,7 +65,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signUp = async (email: string, password: string) => {
     if (!supabase) return { error: { message: "Supabase not configured." } };
-    const redirectUrl = `${window.location.origin}/`;
+    const redirectUrl = `${window.location.origin}/auth`;
     
     const { error } = await supabase.auth.signUp({
       email,
@@ -95,7 +95,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const resetPassword = async (email: string) => {
     if (!supabase) return { error: { message: "Supabase not configured." } };
-    const { error } = await supabase.auth.resetPasswordForEmail(email);
+    const redirectUrl = `${window.location.origin}/auth`;
+    
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: redirectUrl
+    });
     
     return { error };
   };
