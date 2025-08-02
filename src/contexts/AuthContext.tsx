@@ -26,8 +26,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // **FIX**: If supabase is not configured, stop loading and exit early.
-    // This prevents the app from crashing and allows it to run in demo mode.
     if (!supabase) {
       setLoading(false);
       console.warn("Supabase not configured, auth features are disabled.");
