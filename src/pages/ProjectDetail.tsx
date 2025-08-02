@@ -1,110 +1,119 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Task, Project } from "@/types/project";
 import { ProjectService } from "@/services/projectService";
 import { TaskService } from "@/services/taskService";
 import { ProjectHeader } from "@/components/ProjectHeader";
 import { TaskForm } from "@/components/TaskForm";
-import { ImportData } from "@/components/ImportData";
 import { DashboardTabs } from "@/components/DashboardTabs";
-import { CustomFieldsManager } from "@/components/CustomFieldsManager";
-import { ProjectPermissions } from "@/components/ProjectPermissions";
-import { exportToExcel } from "@/utils/exportUtils";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { UserMenu } from "@/components/auth/UserMenu";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchProjectById } from "../store/slices/projectSlice";
+import { fetchTasksForProject } from "../store/slices/taskSlice";
+import { RootState } from "../store/store";
+import { ResourceManagement } from "@/components/ResourceManagement";
+import { BudgetManagement } from "@/components/BudgetManagement";
+import { IntegrationManagement } from "@/components/IntegrationManagement";
+import { IntegrationService } from "@/services/integrationService";
 
 const ProjectDetail = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const dispatch = useDispatch();
 
-  const [project, setProject] = useState<Project | null>(null);
-  const [loading, setLoading] = useState(true);
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>();
 
-  useEffect(() => {
-    if (projectId) {
-      loadProject(projectId);
-    }
-  }, [projectId]);
+  const { data: project, isLoading: projectLoading } = useQuery({
+    queryKey: ['project', projectId],
+    queryFn: () => dispatch(fetchProjectById(projectId!)),
+    enabled: !!projectId,
+  });
 
-  const loadProject = async (id: string) => {
-    try {
-      setLoading(true);
-      const projectData = await ProjectService.getProject(id);
-      
-      if (projectData) {
-        setProject(projectData);
-      } else {
-        throw new Error('Project not found');
+  const { data: tasks = [], isLoading: tasksLoading } = useQuery({
+    queryKey: ['tasks', projectId],
+    queryFn: () => dispatch(fetchTasksForProject(projectId!)),
+    enabled: !!projectId,
+  });
+
+  const { data: integration } = useQuery({
+    queryKey: ['integration', projectId],
+    queryFn: () => IntegrationService.getIntegration(projectId!),
+    enabled: !!projectId,
+  });
+
+  const createTaskMutation = useMutation({
+    mutationFn: TaskService.createTask,
+    onSuccess: (newTask) => {
+      queryClient.invalidateQueries({ queryKey: ['tasks', projectId] });
+      toast({ title: "Task Created", description: `"${newTask.name}" has been added.` });
+      if (integration?.slack_webhook_url && project) {
+        IntegrationService.sendSlackNotification(
+          integration.slack_webhook_url,
+          `New task created in project "${project.name}": *${newTask.name}*`
+        );
       }
-    } catch (error) {
-      console.error('Error loading project:', error);
-      toast({
-        title: "Project Not Found",
-        description: "The requested project could not be found.",
-        variant: "destructive"
-      });
-      navigate('/projects');
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    onError: (error) => {
+      console.error("Error creating task:", error);
+      toast({ title: "Error", description: "Failed to create task.", variant: "destructive" });
+    },
+  });
 
-  const handleSaveTask = async (taskData: Omit<Task, 'id' | 'created_at' | 'updated_at'>) => {
-    try {
-      if (editingTask) {
-        await TaskService.updateTask(editingTask.id, taskData);
-        toast({ title: "Task Updated", description: `"${taskData.name}" has been updated.` });
-      } else {
-        await TaskService.createTask({ ...taskData, project_id: projectId! });
-        toast({ title: "Task Created", description: `"${taskData.name}" has been added.` });
-      }
-      setShowTaskForm(false);
-      setEditingTask(undefined);
-      loadProject(projectId!);
-    } catch (error) {
-      console.error("Error saving task:", error);
-      toast({ title: "Error", description: "Failed to save task.", variant: "destructive" });
-    }
-  };
+  const updateTaskMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<Task> }) => TaskService.updateTask(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks', projectId] });
+      toast({ title: "Task Updated", description: "The task has been updated." });
+    },
+    onError: (error) => {
+      console.error("Error updating task:", error);
+      toast({ title: "Error", description: "Failed to update task.", variant: "destructive" });
+    },
+  });
 
-  const handleDeleteTask = async (taskId: string) => {
-    try {
-      await TaskService.deleteTask(taskId, projectId!);
+  const deleteTaskMutation = useMutation({
+    mutationFn: (taskId: string) => TaskService.deleteTask(taskId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks', projectId] });
       toast({ title: "Task Deleted", description: "The task has been deleted." });
-      loadProject(projectId!);
-    } catch (error) {
+    },
+    onError: (error) => {
       console.error("Error deleting task:", error);
       toast({ title: "Error", description: "Failed to delete task.", variant: "destructive" });
-    }
-  };
+    },
+  });
 
-  const handleExport = () => {
-    if (project && project.tasks) {
-      exportToExcel(project.tasks, project.name);
-      toast({ title: "Export Successful", description: "The project has been exported to Excel." });
+  const handleSaveTask = async (taskData: Omit<Task, 'id' | 'created_at' | 'updated_at'>) => {
+    if (editingTask) {
+      updateTaskMutation.mutate({ id: editingTask.id, data: taskData });
+    } else {
+      createTaskMutation.mutate({ ...taskData, project_id: projectId! });
     }
+    setShowTaskForm(false);
+    setEditingTask(undefined);
   };
 
   const projectStats = useMemo(() => {
-    if (!project || !project.tasks) return { total: 0, completed: 0, inProgress: 0, milestones: 0 };
+    if (!tasks) return { total: 0, completed: 0, inProgress: 0, milestones: 0 };
     
-    const total = project.tasks.length;
-    const completed = project.tasks.filter(task => task.status === 'completed').length;
-    const inProgress = project.tasks.filter(task => task.status === 'in-progress').length;
-    const milestones = project.tasks.filter(task => task.task_type === 'milestone').length;
+    const total = tasks.length;
+    const completed = tasks.filter(task => task.status === 'completed').length;
+    const inProgress = tasks.filter(task => task.status === 'in-progress').length;
+    const milestones = tasks.filter(task => task.task_type === 'milestone').length;
     
     return { total, completed, inProgress, milestones };
-  }, [project]);
+  }, [tasks]);
 
-  if (loading) {
+  if (projectLoading || tasksLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -147,25 +156,34 @@ const ProjectDetail = () => {
         totalTasks={projectStats.total}
         completedTasks={projectStats.completed}
         onAddTask={() => setShowTaskForm(true)}
-        onExport={handleExport}
+        onExport={() => {
+          // Implement export functionality here
+        }}
       />
       <div className="container mx-auto p-6 space-y-6">
         {showTaskForm && (
           <TaskForm
             onSave={handleSaveTask}
             onCancel={() => setShowTaskForm(false)}
-            existingTasks={project.tasks || []}
+            existingTasks={tasks || []}
             editTask={editingTask}
             customFields={project.customFields}
           />
         )}
         <DashboardTabs
-          tasks={project.tasks || []}
+          tasks={tasks || []}
           onEditTask={(task) => { setEditingTask(task); setShowTaskForm(true); }}
-          onDeleteTask={handleDeleteTask}
-          onExportReport={handleExport}
+          onDeleteTask={(taskId) => deleteTaskMutation.mutate(taskId)}
+          onExportReport={() => {
+            // Implement export functionality here
+          }}
           customFields={project.customFields}
         />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <ResourceManagement projectId={projectId!} />
+          <BudgetManagement projectId={projectId!} />
+        </div>
+        <IntegrationManagement projectId={projectId!} />
       </div>
     </div>
   );
