@@ -57,6 +57,42 @@ const ProjectDetail = () => {
     }
   };
 
+  const handleSaveTask = async (taskData: Omit<Task, 'id' | 'created_at' | 'updated_at'>) => {
+    try {
+      if (editingTask) {
+        await TaskService.updateTask(editingTask.id, taskData);
+        toast({ title: "Task Updated", description: `"${taskData.name}" has been updated.` });
+      } else {
+        await TaskService.createTask({ ...taskData, project_id: projectId! });
+        toast({ title: "Task Created", description: `"${taskData.name}" has been added.` });
+      }
+      setShowTaskForm(false);
+      setEditingTask(undefined);
+      loadProject(projectId!);
+    } catch (error) {
+      console.error("Error saving task:", error);
+      toast({ title: "Error", description: "Failed to save task.", variant: "destructive" });
+    }
+  };
+
+  const handleDeleteTask = async (taskId: string) => {
+    try {
+      await TaskService.deleteTask(taskId, projectId!);
+      toast({ title: "Task Deleted", description: "The task has been deleted." });
+      loadProject(projectId!);
+    } catch (error) {
+      console.error("Error deleting task:", error);
+      toast({ title: "Error", description: "Failed to delete task.", variant: "destructive" });
+    }
+  };
+
+  const handleExport = () => {
+    if (project && project.tasks) {
+      exportToExcel(project.tasks, project.name);
+      toast({ title: "Export Successful", description: "The project has been exported to Excel." });
+    }
+  };
+
   const projectStats = useMemo(() => {
     if (!project || !project.tasks) return { total: 0, completed: 0, inProgress: 0, milestones: 0 };
     
@@ -79,10 +115,60 @@ const ProjectDetail = () => {
       </div>
     );
   }
-  
-  // All other functions (`handleAddTask`, `handleSaveTask`, etc.) remain the same
-  // as they were already using fields that align with the new types.
-  // ... (rest of the component logic remains the same)
+
+  if (!project) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-2">Project Not Found</h2>
+          <p className="text-muted-foreground">The project you are looking for does not exist.</p>
+          <Button onClick={() => navigate('/projects')} className="mt-4">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Go Back to Projects
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="border-b bg-card">
+        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
+          <Button onClick={() => navigate('/projects')} variant="outline">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Projects
+          </Button>
+          <UserMenu />
+        </div>
+      </div>
+      <ProjectHeader
+        projectName={project.name}
+        totalTasks={projectStats.total}
+        completedTasks={projectStats.completed}
+        onAddTask={() => setShowTaskForm(true)}
+        onExport={handleExport}
+      />
+      <div className="container mx-auto p-6 space-y-6">
+        {showTaskForm && (
+          <TaskForm
+            onSave={handleSaveTask}
+            onCancel={() => setShowTaskForm(false)}
+            existingTasks={project.tasks || []}
+            editTask={editingTask}
+            customFields={project.customFields}
+          />
+        )}
+        <DashboardTabs
+          tasks={project.tasks || []}
+          onEditTask={(task) => { setEditingTask(task); setShowTaskForm(true); }}
+          onDeleteTask={handleDeleteTask}
+          onExportReport={handleExport}
+          customFields={project.customFields}
+        />
+      </div>
+    </div>
+  );
 };
 
 export default ProjectDetail;
