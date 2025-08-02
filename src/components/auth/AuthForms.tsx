@@ -105,5 +105,132 @@ export const AuthForms: React.FC<AuthFormsProps> = ({ onSuccess }) => {
     resetForm();
   };
   
-  // ... (rest of the component JSX remains the same)
+  const getTitle = () => {
+    switch (mode) {
+      case 'signup': return 'Create Account';
+      case 'forgot': return 'Reset Password';
+      default: return 'Sign In';
+    }
+  };
+
+  const getDescription = () => {
+    switch (mode) {
+      case 'signup': return 'Create your account to get started';
+      case 'forgot': return 'Enter your email to receive reset instructions';
+      default: return 'Enter your credentials to access your account';
+    }
+  };
+
+  return (
+    <Card className="w-full max-w-md mx-auto">
+      <CardHeader>
+        <CardTitle>{getTitle()}</CardTitle>
+        <CardDescription>{getDescription()}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              required
+            />
+          </div>
+
+          {mode !== 'forgot' && (
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+              />
+            </div>
+          )}
+
+          {mode === 'signup' && (
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+              />
+            </div>
+          )}
+
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? 'Loading...' : getTitle()}
+          </Button>
+        </form>
+
+        <div className="mt-4 text-center space-y-2">
+          {mode === 'signin' && (
+            <>
+              <Button
+                variant="link"
+                className="text-sm"
+                onClick={() => switchMode('forgot')}
+              >
+                Forgot your password?
+              </Button>
+              <div>
+                <span className="text-sm text-muted-foreground">
+                  Don't have an account?{' '}
+                </span>
+                <Button
+                  variant="link"
+                  className="text-sm p-0"
+                  onClick={() => switchMode('signup')}
+                >
+                  Sign up
+                </Button>
+              </div>
+            </>
+          )}
+
+          {mode === 'signup' && (
+            <div>
+              <span className="text-sm text-muted-foreground">
+                Already have an account?{' '}
+              </span>
+              <Button
+                variant="link"
+                className="text-sm p-0"
+                onClick={() => switchMode('signin')}
+              >
+                Sign in
+              </Button>
+            </div>
+          )}
+
+          {mode === 'forgot' && (
+            <Button
+              variant="link"
+              className="text-sm"
+              onClick={() => switchMode('signin')}
+            >
+              Back to sign in
+            </Button>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
 };
