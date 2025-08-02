@@ -31,21 +31,21 @@ export function ProjectReports({ tasks, onExportReport }: ProjectReportsProps) {
     const notStartedTasks = tasks.filter(t => t.status === 'not-started').length;
     const onHoldTasks = tasks.filter(t => t.status === 'on-hold').length;
     
-    const milestones = tasks.filter(t => t.type === 'milestone');
+    const milestones = tasks.filter(t => t.task_type === 'milestone');
     const completedMilestones = milestones.filter(t => t.status === 'completed').length;
     
-    const deliverables = tasks.filter(t => t.type === 'deliverable');
+    const deliverables = tasks.filter(t => t.task_type === 'deliverable');
     const completedDeliverables = deliverables.filter(t => t.status === 'completed').length;
 
     const now = new Date();
     const overdueTasks = tasks.filter(t => 
-      t.status !== 'completed' && isBefore(t.endDate, now)
+      t.status !== 'completed' && isBefore(new Date(t.end_date), now)
     );
     
     const upcomingTasks = tasks.filter(t => 
       t.status === 'not-started' && 
-      isAfter(t.startDate, now) && 
-      differenceInDays(t.startDate, now) <= 7
+      isAfter(new Date(t.start_date), now) && 
+      differenceInDays(new Date(t.start_date), now) <= 7
     );
 
     // Team performance
@@ -73,7 +73,7 @@ export function ProjectReports({ tasks, onExportReport }: ProjectReportsProps) {
 
     // Type distribution
     const typeData = [
-      { name: 'Tasks', value: tasks.filter(t => t.type === 'task').length },
+      { name: 'Tasks', value: tasks.filter(t => t.task_type === 'task').length },
       { name: 'Milestones', value: milestones.length },
       { name: 'Deliverables', value: deliverables.length }
     ];
@@ -292,7 +292,7 @@ export function ProjectReports({ tasks, onExportReport }: ProjectReportsProps) {
                     <div>
                       <p className="font-medium">{task.name}</p>
                       <p className="text-sm text-muted-foreground">
-                        Due: {format(task.endDate, 'MMM dd, yyyy')}
+                        Due: {format(new Date(task.end_date), 'MMM dd, yyyy')}
                       </p>
                     </div>
                     <Badge variant="destructive">{task.status}</Badge>
@@ -314,7 +314,7 @@ export function ProjectReports({ tasks, onExportReport }: ProjectReportsProps) {
                     <div>
                       <p className="font-medium">{task.name}</p>
                       <p className="text-sm text-muted-foreground">
-                        Starts: {format(task.startDate, 'MMM dd, yyyy')}
+                        Starts: {format(new Date(task.start_date), 'MMM dd, yyyy')}
                       </p>
                     </div>
                     <Badge variant="secondary">{task.status}</Badge>
