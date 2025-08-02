@@ -1,10 +1,9 @@
 import { useMemo } from "react";
 import { format, differenceInDays, startOfWeek, endOfWeek, eachDayOfInterval, addDays, isSameDay } from "date-fns";
-import { Task } from "@/types/project";
+import { Task, TaskStatus, TaskType } from "@/types/project";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Edit2, Trash2 } from "lucide-react";
-import { adaptTaskForLegacyComponents } from "@/utils/typeCompatibility";
 
 interface GanttChartProps {
   tasks: Task[];
@@ -13,11 +12,9 @@ interface GanttChartProps {
 }
 
 export function GanttChart({ tasks, onEditTask, onDeleteTask }: GanttChartProps) {
-  // Convert tasks to legacy format for compatibility
-  const adaptedTasks = tasks.map(adaptTaskForLegacyComponents);
   
   const { dateRange, dayColumns, taskRows } = useMemo(() => {
-    if (adaptedTasks.length === 0) {
+    if (tasks.length === 0) {
       const today = new Date();
       return {
         dateRange: { start: today, end: addDays(today, 30) },
@@ -26,7 +23,7 @@ export function GanttChart({ tasks, onEditTask, onDeleteTask }: GanttChartProps)
       };
     }
 
-    const allDates = adaptedTasks.flatMap(task => [task.startDate, task.endDate]);
+    const allDates = tasks.flatMap(task => [new Date(task.start_date), new Date(task.end_date)]);
     const minDate = new Date(Math.min(...allDates.map(d => d.getTime())));
     const maxDate = new Date(Math.max(...allDates.map(d => d.getTime())));
 
@@ -36,16 +33,18 @@ export function GanttChart({ tasks, onEditTask, onDeleteTask }: GanttChartProps)
     const days = eachDayOfInterval({ start, end });
     const totalDays = days.length;
 
-    const rows = adaptedTasks.map(task => {
-      const taskStart = Math.max(0, differenceInDays(task.startDate, start));
-      const taskDuration = differenceInDays(task.endDate, task.startDate) + 1;
+    const rows = tasks.map(task => {
+      const taskStartDate = new Date(task.start_date);
+      const taskEndDate = new Date(task.end_date);
+      const taskStart = Math.max(0, differenceInDays(taskStartDate, start));
+      const taskDuration = differenceInDays(taskEndDate, taskStartDate) + 1;
       const taskWidth = Math.min(taskDuration, totalDays - taskStart);
 
       return {
         task,
         startOffset: (taskStart / totalDays) * 100,
         width: (taskWidth / totalDays) * 100,
-        duration: differenceInDays(task.endDate, task.startDate) + 1
+        duration: differenceInDays(taskEndDate, taskStartDate) + 1
       };
     });
 
@@ -54,9 +53,9 @@ export function GanttChart({ tasks, onEditTask, onDeleteTask }: GanttChartProps)
       dayColumns: days,
       taskRows: rows
     };
-  }, [adaptedTasks]);
+  }, [tasks]);
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: TaskStatus) => {
     switch (status) {
       case 'completed': return 'bg-success';
       case 'in-progress': return 'bg-primary';
@@ -65,7 +64,7 @@ export function GanttChart({ tasks, onEditTask, onDeleteTask }: GanttChartProps)
     }
   };
 
-  const getTypeIcon = (type: string) => {
+  const getTypeIcon = (type: TaskType) => {
     switch (type) {
       case 'milestone': return '◆';
       case 'deliverable': return '📦';
@@ -109,7 +108,7 @@ export function GanttChart({ tasks, onEditTask, onDeleteTask }: GanttChartProps)
               <div className="flex items-center justify-between">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center space-x-2">
-                    <span className="text-sm">{getTypeIcon(task.type)}</span>
+                    <span className="text-sm">{getTypeIcon(task.task_type)}</span>
                     <span className="font-medium truncate">{task.name}</span>
                   </div>
                   <div className="flex items-center space-x-2 mt-1">
@@ -124,7 +123,7 @@ export function GanttChart({ tasks, onEditTask, onDeleteTask }: GanttChartProps)
                     )}
                   </div>
                   <div className="text-xs text-muted-foreground mt-1">
-                    {format(task.startDate, 'MMM dd')} - {format(task.endDate, 'MMM dd')}
+                    {format(new Date(task.start_date), 'MMM dd')} - {format(new Date(task.end_date), 'MMM dd')}
                   </div>
                 </div>
                 <div className="flex space-x-1">
@@ -150,14 +149,14 @@ export function GanttChart({ tasks, onEditTask, onDeleteTask }: GanttChartProps)
             <div className="flex-1 relative p-3">
               <div 
                 className={`absolute top-1/2 transform -translate-y-1/2 h-6 rounded ${getStatusColor(task.status)} ${
-                  task.type === 'milestone' ? 'h-3 rotate-45' : ''
+                  task.task_type === 'milestone' ? 'h-3 rotate-45' : ''
                 }`}
                 style={{
                   left: `${startOffset}%`,
-                  width: task.type === 'milestone' ? '12px' : `${width}%`
+                  width: task.task_type === 'milestone' ? '12px' : `${width}%`
                 }}
               >
-                {task.type !== 'milestone' && (
+                {task.task_type !== 'milestone' && (
                   <div 
                     className="h-full bg-white/20 rounded-l"
                     style={{ width: `${task.progress}%` }}

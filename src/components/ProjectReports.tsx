@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useMemo } from "react";
 import { Task } from "@/types/project";
 import { Card } from "@/components/ui/card";
@@ -248,7 +247,7 @@ export function ProjectReports({ tasks, onExportReport }: ProjectReportsProps) {
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {Object.entries(analytics.teamPerformance).map(([assignee, stats]) => {
-              const completionRate = Math.round((stats.completed / stats.total) * 100);
+              const completionRate = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
               return (
                 <div key={assignee} className="p-4 border rounded-lg">
                   <div className="flex items-center justify-between mb-2">

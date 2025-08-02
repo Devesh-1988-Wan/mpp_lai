@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Task, TaskStatus, TaskType, CustomField, FieldType } from "@/types/project";
 
 interface FieldMapping {
@@ -10,7 +9,7 @@ export function importFromCSVWithMapping(
   csvContent: string, 
   mappings: FieldMapping[],
   customFields: CustomField[] = []
-): Omit<Task, 'id'>[] {
+): Omit<Task, 'id' | 'created_at' | 'updated_at'>[] {
   const lines = csvContent.trim().split('\n');
   
   if (lines.length < 2) {
@@ -31,7 +30,7 @@ export function importFromCSVWithMapping(
     }
   });
 
-  const tasks: Omit<Task, 'id'>[] = [];
+  const tasks: Omit<Task, 'id' | 'created_at' | 'updated_at'>[] = [];
 
   // Parse data rows
   for (let i = 1; i < lines.length; i++) {
@@ -54,8 +53,8 @@ export function importFromCSVWithMapping(
       if (!name) continue; // Skip rows without task name
 
       // Parse dates
-      const startDateStr = getValue('startDate');
-      const endDateStr = getValue('endDate');
+      const startDateStr = getValue('start_date');
+      const endDateStr = getValue('end_date');
       
       const startDate = parseDate(startDateStr);
       const endDate = parseDate(endDateStr);
@@ -66,7 +65,7 @@ export function importFromCSVWithMapping(
       }
 
       // Parse type with fallback
-      const typeValue = getValue('type').toLowerCase().trim() || 'task';
+      const typeValue = getValue('task_type').toLowerCase().trim() || 'task';
       const type: TaskType = ['task', 'milestone', 'deliverable'].includes(typeValue) 
         ? typeValue as TaskType 
         : 'task';
@@ -103,21 +102,22 @@ export function importFromCSVWithMapping(
       customFields.forEach(field => {
         const value = getValue(`custom_${field.id}`);
         if (value) {
-          customFieldValues[field.id] = parseCustomFieldValue(value, field.type);
+          customFieldValues[field.id] = parseCustomFieldValue(value, field.field_type);
         }
       });
 
-      const task: Omit<Task, 'id'> = {
+      const task: Omit<Task, 'id' | 'created_at' | 'updated_at'> = {
         name,
-        type,
+        task_type: type,
         status,
-        startDate,
-        endDate,
+        start_date: startDate.toISOString().split('T')[0], // Convert to YYYY-MM-DD format
+        end_date: endDate.toISOString().split('T')[0],
         assignee: getValue('assignee'),
         progress,
         dependencies,
         description: getValue('description'),
-        customFields: Object.keys(customFieldValues).length > 0 ? customFieldValues : undefined
+        custom_fields: Object.keys(customFieldValues).length > 0 ? customFieldValues : undefined,
+        project_id: '' // This will be set when the task is created
       };
 
       tasks.push(task);

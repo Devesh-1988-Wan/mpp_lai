@@ -12,10 +12,6 @@ import { UserMenu } from "@/components/auth/UserMenu";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useDispatch, useSelector } from "react-redux";
-import { fetchProjectById } from "../store/slices/projectSlice";
-import { fetchTasksForProject } from "../store/slices/taskSlice";
-import { RootState } from "../store/store";
 import { ResourceManagement } from "@/components/ResourceManagement";
 import { BudgetManagement } from "@/components/BudgetManagement";
 import { IntegrationManagement } from "@/components/IntegrationManagement";
@@ -27,20 +23,19 @@ const ProjectDetail = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const dispatch = useDispatch();
 
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>();
 
-  const { data: project, isLoading: projectLoading } = useQuery({
+  const { data: project, isLoading: projectLoading } = useQuery<Project>({
     queryKey: ['project', projectId],
-    queryFn: () => dispatch(fetchProjectById(projectId!)),
+    queryFn: () => ProjectService.getProject(projectId!),
     enabled: !!projectId,
   });
 
-  const { data: tasks = [], isLoading: tasksLoading } = useQuery({
+  const { data: tasks = [], isLoading: tasksLoading } = useQuery<Task[]>({
     queryKey: ['tasks', projectId],
-    queryFn: () => dispatch(fetchTasksForProject(projectId!)),
+    queryFn: () => TaskService.getProjectTasks(projectId!),
     enabled: !!projectId,
   });
 

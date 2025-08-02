@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Plus, Edit, Trash2, Settings, X } from "lucide-react";
 import { CustomField, FieldType } from "@/types/project";
 import { useToast } from "@/hooks/use-toast";
+import { v4 as uuidv4 } from 'uuid';
 
 interface CustomFieldsManagerProps {
   customFields: CustomField[];
@@ -47,12 +47,12 @@ export function CustomFieldsManager({ customFields, onUpdate }: CustomFieldsMana
     }
   };
 
-  const handleSaveField = (fieldData: Omit<CustomField, 'id'>) => {
+  const handleSaveField = (fieldData: Omit<CustomField, 'id' | 'created_at' | 'project_id'>) => {
     if (editingField) {
       // Update existing field
       const updatedFields = customFields.map(field =>
         field.id === editingField.id
-          ? { ...fieldData, id: editingField.id }
+          ? { ...field, ...fieldData }
           : field
       );
       onUpdate(updatedFields);
@@ -64,7 +64,9 @@ export function CustomFieldsManager({ customFields, onUpdate }: CustomFieldsMana
       // Create new field
       const newField: CustomField = {
         ...fieldData,
-        id: Date.now().toString()
+        id: uuidv4(),
+        project_id: '', // This will be set on the server
+        created_at: new Date().toISOString(),
       };
       onUpdate([...customFields, newField]);
       toast({
@@ -124,19 +126,19 @@ export function CustomFieldsManager({ customFields, onUpdate }: CustomFieldsMana
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
                           <span className="font-medium">{field.name}</span>
-                          <Badge variant="outline">{field.type}</Badge>
+                          <Badge variant="outline">{field.field_type}</Badge>
                           {field.required && (
                             <Badge variant="secondary" className="text-xs">Required</Badge>
                           )}
                         </div>
-                        {field.options && field.options.length > 0 && (
+                        {field.options && Array.isArray(field.options) && field.options.length > 0 && (
                           <div className="text-sm text-muted-foreground">
                             Options: {field.options.join(', ')}
                           </div>
                         )}
-                        {field.defaultValue && (
+                        {field.default_value && (
                           <div className="text-sm text-muted-foreground">
-                            Default: {field.defaultValue.toString()}
+                            Default: {field.default_value.toString()}
                           </div>
                         )}
                       </div>
@@ -175,30 +177,30 @@ export function CustomFieldsManager({ customFields, onUpdate }: CustomFieldsMana
 }
 
 interface CustomFieldFormProps {
-  onSave: (field: Omit<CustomField, 'id'>) => void;
+  onSave: (field: Omit<CustomField, 'id' | 'created_at' | 'project_id'>) => void;
   onCancel: () => void;
   editField?: CustomField;
 }
 
 function CustomFieldForm({ onSave, onCancel, editField }: CustomFieldFormProps) {
   const [name, setName] = useState(editField?.name || '');
-  const [type, setType] = useState<FieldType>(editField?.type || 'text');
+  const [type, setType] = useState<FieldType>(editField?.field_type || 'text');
   const [required, setRequired] = useState(editField?.required || false);
   const [options, setOptions] = useState<string[]>(editField?.options || []);
   const [newOption, setNewOption] = useState('');
-  const [defaultValue, setDefaultValue] = useState(editField?.defaultValue?.toString() || '');
+  const [defaultValue, setDefaultValue] = useState(editField?.default_value?.toString() || '');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!name.trim()) return;
 
-    const fieldData: Omit<CustomField, 'id'> = {
+    const fieldData: Omit<CustomField, 'id' | 'created_at' | 'project_id'> = {
       name: name.trim(),
-      type,
+      field_type: type,
       required,
       options: type === 'select' ? options.filter(o => o.trim()) : undefined,
-      defaultValue: defaultValue.trim() || undefined
+      default_value: defaultValue.trim() || undefined
     };
 
     onSave(fieldData);

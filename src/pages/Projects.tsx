@@ -1,19 +1,17 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Project } from "@/types/project";
 import { ProjectService } from "@/services/projectService";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Plus, FolderOpen, Calendar, Users, Archive, Loader2 } from "lucide-react";
-import { format, isValid, parseISO } from "date-fns";
+import { format, isValid } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { ProjectForm } from "@/components/ProjectForm";
 import { useToast } from "@/hooks/use-toast";
 import { UserMenu } from "@/components/auth/UserMenu";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useDispatch } from "react-redux";
-import { fetchProjects } from "../store/slices/projectSlice";
 
 // Helper function to safely format dates
 const formatDate = (dateString: string | null | undefined): string => {
@@ -35,11 +33,10 @@ const Projects = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const dispatch = useDispatch();
 
-  const { data: projects = [], isLoading } = useQuery({
+  const { data: projects = [], isLoading } = useQuery<Project[]>({
     queryKey: ['projects'],
-    queryFn: () => dispatch(fetchProjects()),
+    queryFn: ProjectService.getUserProjects,
   });
 
   const createProjectMutation = useMutation({
@@ -63,7 +60,7 @@ const Projects = () => {
   });
 
   const updateProjectMutation = useMutation({
-    mutationFn: ({ id, data }) => ProjectService.updateProject(id, data),
+    mutationFn: ({ id, data }: { id: string, data: Omit<Project, 'id' | 'created_date' | 'last_modified' | 'created_by'> }) => ProjectService.updateProject(id, data),
     onSuccess: (updatedProject) => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       toast({
