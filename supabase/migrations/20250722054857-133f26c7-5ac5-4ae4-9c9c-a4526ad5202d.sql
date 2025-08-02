@@ -1,5 +1,5 @@
--- Create projects table
-CREATE TABLE public.projects (
+-- Create projects table if it doesn't exist
+CREATE TABLE IF NOT EXISTS public.projects (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
   description TEXT,
@@ -10,8 +10,8 @@ CREATE TABLE public.projects (
   team_members JSONB DEFAULT '[]'::jsonb
 );
 
--- Create tasks table
-CREATE TABLE public.tasks (
+-- Create tasks table if it doesn't exist
+CREATE TABLE IF NOT EXISTS public.tasks (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   project_id UUID REFERENCES public.projects(id) ON DELETE CASCADE NOT NULL,
   name TEXT NOT NULL,
@@ -28,8 +28,8 @@ CREATE TABLE public.tasks (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Create custom_fields table
-CREATE TABLE public.custom_fields (
+-- Create custom_fields table if it doesn't exist
+CREATE TABLE IF NOT EXISTS public.custom_fields (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   project_id UUID REFERENCES public.projects(id) ON DELETE CASCADE NOT NULL,
   name TEXT NOT NULL,
@@ -40,8 +40,8 @@ CREATE TABLE public.custom_fields (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Create activity_log table
-CREATE TABLE public.activity_log (
+-- Create activity_log table if it doesn't exist
+CREATE TABLE IF NOT EXISTS public.activity_log (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   project_id UUID REFERENCES public.projects(id) ON DELETE CASCADE NOT NULL,
   task_id UUID REFERENCES public.tasks(id) ON DELETE CASCADE,
@@ -58,6 +58,7 @@ ALTER TABLE public.custom_fields ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.activity_log ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for projects
+DROP POLICY IF EXISTS "Users can view projects they created or are team members of" ON public.projects;
 CREATE POLICY "Users can view projects they created or are team members of" 
 ON public.projects 
 FOR SELECT 
@@ -67,18 +68,21 @@ USING (
   auth.uid()::text = ANY(SELECT jsonb_array_elements_text(team_members))
 );
 
+DROP POLICY IF EXISTS "Users can create their own projects" ON public.projects;
 CREATE POLICY "Users can create their own projects" 
 ON public.projects 
 FOR INSERT 
 TO authenticated 
 WITH CHECK (created_by = auth.uid());
 
+DROP POLICY IF EXISTS "Project creators can update their projects" ON public.projects;
 CREATE POLICY "Project creators can update their projects" 
 ON public.projects 
 FOR UPDATE 
 TO authenticated 
 USING (created_by = auth.uid());
 
+DROP POLICY IF EXISTS "Project creators can delete their projects" ON public.projects;
 CREATE POLICY "Project creators can delete their projects" 
 ON public.projects 
 FOR DELETE 
@@ -86,6 +90,7 @@ TO authenticated
 USING (created_by = auth.uid());
 
 -- RLS Policies for tasks
+DROP POLICY IF EXISTS "Users can view tasks for accessible projects" ON public.tasks;
 CREATE POLICY "Users can view tasks for accessible projects" 
 ON public.tasks 
 FOR SELECT 
@@ -101,6 +106,7 @@ USING (
   )
 );
 
+DROP POLICY IF EXISTS "Users can manage tasks for accessible projects" ON public.tasks;
 CREATE POLICY "Users can manage tasks for accessible projects" 
 ON public.tasks 
 FOR ALL 
@@ -117,6 +123,7 @@ USING (
 );
 
 -- RLS Policies for custom_fields
+DROP POLICY IF EXISTS "Users can view custom fields for accessible projects" ON public.custom_fields;
 CREATE POLICY "Users can view custom fields for accessible projects" 
 ON public.custom_fields 
 FOR SELECT 
@@ -132,6 +139,7 @@ USING (
   )
 );
 
+DROP POLICY IF EXISTS "Users can manage custom fields for accessible projects" ON public.custom_fields;
 CREATE POLICY "Users can manage custom fields for accessible projects" 
 ON public.custom_fields 
 FOR ALL 
@@ -148,6 +156,7 @@ USING (
 );
 
 -- RLS Policies for activity_log
+DROP POLICY IF EXISTS "Users can view activity for accessible projects" ON public.activity_log;
 CREATE POLICY "Users can view activity for accessible projects" 
 ON public.activity_log 
 FOR SELECT 
@@ -163,6 +172,7 @@ USING (
   )
 );
 
+DROP POLICY IF EXISTS "Users can create activity logs for accessible projects" ON public.activity_log;
 CREATE POLICY "Users can create activity logs for accessible projects" 
 ON public.activity_log 
 FOR INSERT 
@@ -179,11 +189,31 @@ WITH CHECK (
   )
 );
 
--- Create triggers for updated_at timestamps
-CREATE TRIGGER update_projects_updated_at
-  BEFORE UPDATE ON public.projects
-  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+-- Create a function to update the `last_modified` timestamp on projects
+CREATE OR REPLACE FUNCTION public.update_last_modified_column()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.last_modified = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
+-- Create a function to update the `updated_at` timestamp on other tables
+CREATE OR REPLACE FUNCTION public.update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+   NEW.updated_at = now();
+   RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+-- Create triggers for timestamps
+DROP TRIGGER IF EXISTS update_projects_last_modified ON public.projects;
+CREATE TRIGGER update_projects_last_modified
+  BEFORE UPDATE ON public.projects
+  FOR EACH ROW EXECUTE FUNCTION public.update_last_modified_column();
+
+DROP TRIGGER IF EXISTS update_tasks_updated_at ON public.tasks;
 CREATE TRIGGER update_tasks_updated_at
   BEFORE UPDATE ON public.tasks
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
