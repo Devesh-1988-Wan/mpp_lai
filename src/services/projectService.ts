@@ -16,65 +16,56 @@ type ProjectInsert = Omit<Project, 'id' | 'created_date' | 'last_modified' | 'cr
 type ProjectUpdate = Partial<Omit<Project, 'id' | 'created_date' | 'created_by'>>
 
 export class ProjectService {
-  // Get all projects for the current user
-  static async getUserProjects() {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('User not authenticated');
+  // Get all projects for the current user using an RPC call
+  static async getUserProjects() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
 
-    const { data, error } = await supabase
-      .from('projects')
-      .select('*')
-      .order('last_modified', { ascending: false });
+    const { data, error } = await supabase.rpc('get_user_projects');
 
-    if (error) throw error
-    
-    return data?.map(project => ({
-      ...project,
-      status: project.status as 'active' | 'completed' | 'archived',
-      team_members: Array.isArray(project.team_members) ? 
-        (project.team_members as any[]).map(member => String(member)) : 
-        []
-    })) || []
-  }
+    if (error) throw error
+    
+    return data?.map(project => ({
+      ...project,
+      status: project.status as 'active' | 'completed' | 'archived',
+      team_members: Array.isArray(project.team_members) ? 
+        (project.team_members as any[]).map(member => String(member)) : 
+        []
+    })) || []
+  }
 
-  // Get a specific project by ID
-  static async getProject(id: string) {
-    const { data, error } = await supabase
-      .from('projects')
-      .select('*')
-      .eq('id', id)
-      .single()
+  // Get a specific project by ID with embedded custom fields
+  static async getProject(id: string) {
+    const { data, error } = await supabase
+      .from('projects')
+      .select('*, custom_fields(*)')
+      .eq('id', id)
+      .single()
 
-    if (error) throw error
-    
-    // Fetch custom fields separately
-    const { data: customFields } = await supabase
-      .from('custom_fields')
-      .select('*')
-      .eq('project_id', id)
-    
-    return {
-      ...data,
-      status: data.status as 'active' | 'completed' | 'archived',
-      team_members: Array.isArray(data.team_members) ? 
-        (data.team_members as any[]).map(member => String(member)) : 
-        [],
-      customFields: customFields?.map(field => ({
-        ...field,
-        field_type: field.field_type as 'text' | 'number' | 'date' | 'select' | 'boolean',
-        options: field.options as any,
-        default_value: field.default_value as any
-      })) || []
-    }
-  }
+    if (error) throw error
+    
+    return {
+      ...data,
+      status: data.status as 'active' | 'completed' | 'archived',
+      team_members: Array.isArray(data.team_members) ? 
+        (data.team_members as any[]).map(member => String(member)) : 
+        [],
+      customFields: data.custom_fields?.map(field => ({
+        ...field,
+        field_type: field.field_type as 'text' | 'number' | 'date' | 'select' | 'boolean',
+        options: field.options as any,
+        default_value: field.default_value as any
+      })) || []
+    }
+  }
 
   // Create a new project
   static async createProject(project: ProjectInsert) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error('User not authenticated')
 
-    // Destructure to remove fields that are not in the 'projects' table
-    const { tasks, customFields, ...projectData } = project as any;
+    // Destructure to remove fields that are not in the 'projects' table
+    const { tasks, customFields, ...projectData } = project as any;
 
     const { data, error } = await supabase
       .from('projects')
@@ -91,8 +82,8 @@ export class ProjectService {
 
   // Update a project
   static async updateProject(id: string, updates: any) {
-    // Destructure to remove fields that are not in the 'projects' table
-    const { tasks, customFields, ...projectData } = updates;
+    // Destructure to remove fields that are not in the 'projects' table
+    const { tasks, customFields, ...projectData } = updates;
 
     const { data, error } = await supabase
       .from('projects')
