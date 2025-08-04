@@ -73,10 +73,13 @@ export class ProjectService {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error('User not authenticated')
 
+    // Destructure to remove fields that are not in the 'projects' table
+    const { tasks, customFields, ...projectData } = project as any;
+
     const { data, error } = await supabase
       .from('projects')
       .insert([{
-        ...project,
+        ...projectData,
         created_by: user.id
       }])
       .select()
@@ -88,9 +91,12 @@ export class ProjectService {
 
   // Update a project
   static async updateProject(id: string, updates: any) {
+    // Destructure to remove fields that are not in the 'projects' table
+    const { tasks, customFields, ...projectData } = updates;
+
     const { data, error } = await supabase
       .from('projects')
-      .update(updates)
+      .update(projectData)
       .eq('id', id)
       .select()
       .single()
