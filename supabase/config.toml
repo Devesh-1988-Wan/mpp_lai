@@ -29,8 +29,6 @@ enable_signup = true
 double_confirm_changes = true
 enable_confirmations = false
 
-[functions."*"]
-verify_jwt = true
-
-[functions.invite-user]
+# This section applies to all functions
+[functions]
 verify_jwt = true
