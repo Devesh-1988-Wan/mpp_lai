@@ -1,4 +1,4 @@
-import { Plus, Download, Settings, Calendar } from "lucide-react";
+import { Plus, Download, Settings, Calendar, Upload } from "lucide-react"; // Import Upload icon
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
@@ -8,14 +8,16 @@ interface ProjectHeaderProps {
   completedTasks: number;
   onAddTask: () => void;
   onExport: () => void;
+  onImport: () => void; // Add onImport prop
 }
 
-export function ProjectHeader({ 
-  projectName, 
-  totalTasks, 
-  completedTasks, 
-  onAddTask, 
-  onExport 
+export function ProjectHeader({
+  projectName,
+  totalTasks,
+  completedTasks,
+  onAddTask,
+  onExport,
+  onImport, // Destructure onImport
 }: ProjectHeaderProps) {
   const completionPercentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
@@ -30,8 +32,8 @@ export function ProjectHeader({
                 <Calendar className="w-3 h-3 mr-1" />
                 {totalTasks} tasks
               </Badge>
-              <Badge 
-                variant={completionPercentage === 100 ? "default" : "secondary"} 
+              <Badge
+                variant={completionPercentage === 100 ? "default" : "secondary"}
                 className="bg-white/20 text-primary-foreground border-0"
               >
                 {completionPercentage}% complete
@@ -41,24 +43,33 @@ export function ProjectHeader({
         </div>
 
         <div className="flex items-center space-x-2">
-          <Button 
-            onClick={onAddTask} 
-            variant="secondary" 
+          <Button
+            onClick={onAddTask}
+            variant="secondary"
             className="bg-white/20 hover:bg-white/30 text-primary-foreground border-0"
           >
             <Plus className="w-4 h-4 mr-2" />
             Add Task
           </Button>
-          <Button 
-            onClick={onExport} 
-            variant="secondary" 
+          {/* Add Import Button */}
+          <Button
+            onClick={onImport}
+            variant="secondary"
+            className="bg-white/20 hover:bg-white/30 text-primary-foreground border-0"
+          >
+            <Upload className="w-4 h-4 mr-2" />
+            Import
+          </Button>
+          <Button
+            onClick={onExport}
+            variant="secondary"
             className="bg-white/20 hover:bg-white/30 text-primary-foreground border-0"
           >
             <Download className="w-4 h-4 mr-2" />
             Export
           </Button>
-          <Button 
-            variant="secondary" 
+          <Button
+            variant="secondary"
             size="icon"
             className="bg-white/20 hover:bg-white/30 text-primary-foreground border-0"
           >

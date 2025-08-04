@@ -16,6 +16,7 @@ import { ResourceManagement } from "@/components/ResourceManagement";
 import { BudgetManagement } from "@/components/BudgetManagement";
 import { IntegrationManagement } from "@/components/IntegrationManagement";
 import { IntegrationService } from "@/services/integrationService";
+import { ImportData } from "@/components/ImportData"; // Import the ImportData component
 
 const ProjectDetail = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -26,6 +27,7 @@ const ProjectDetail = () => {
 
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>();
+  const [showImportDialog, setShowImportDialog] = useState(false); // State for import dialog
 
   const { data: project, isLoading: projectLoading } = useQuery({
     queryKey: ['project', projectId],
@@ -86,6 +88,14 @@ const ProjectDetail = () => {
       toast({ title: "Error", description: "Failed to delete task.", variant: "destructive" });
     },
   });
+
+  // Handler for importing tasks
+  const handleImportTasks = async (importedTasks: Omit<Task, 'id' | 'created_at' | 'updated_at'>[]) => {
+    for (const task of importedTasks) {
+      createTaskMutation.mutate({ ...task, project_id: projectId! });
+    }
+    setShowImportDialog(false);
+  };
 
   const handleSaveTask = async (taskData: Omit<Task, 'id' | 'created_at' | 'updated_at'>) => {
     if (editingTask) {
@@ -154,6 +164,7 @@ const ProjectDetail = () => {
         onExport={() => {
           // Implement export functionality here
         }}
+        onImport={() => setShowImportDialog(true)} // Pass the handler to open the dialog
       />
       <div className="container mx-auto p-6 space-y-6">
         {showTaskForm && (
@@ -165,6 +176,14 @@ const ProjectDetail = () => {
             customFields={project.customFields}
           />
         )}
+        {/* Add the ImportData component */}
+        {showImportDialog && (
+            <ImportData
+                onImport={handleImportTasks}
+                existingTasks={tasks}
+                customFields={project.customFields}
+            />
+        )}
         <DashboardTabs
           tasks={tasks || []}
           onEditTask={(task) => { setEditingTask(task); setShowTaskForm(true); }}
@@ -175,8 +194,7 @@ const ProjectDetail = () => {
           customFields={project.customFields}
         />
         {/* Temporarily disabled components due to missing database tables in types */}
-        {/* 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <ResourceManagement projectId={projectId!} />
           <BudgetManagement projectId={projectId!} />
         </div>
