@@ -66,6 +66,48 @@ export type Database = {
           },
         ]
       }
+      budgets: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string | null
+          id: string
+          project_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          category: string
+          created_at?: string | null
+          id?: string
+          project_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string | null
+          id?: string
+          project_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budgets_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budgets_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       custom_fields: {
         Row: {
           created_at: string | null
@@ -109,6 +151,100 @@ export type Database = {
             foreignKeyName: "custom_fields_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expenses: {
+        Row: {
+          amount: number
+          budget_id: string
+          created_at: string | null
+          description: string | null
+          id: string
+          incurred_on: string
+          project_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          budget_id: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          incurred_on: string
+          project_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          budget_id?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          incurred_on?: string
+          project_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "budgets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      integrations: {
+        Row: {
+          created_at: string | null
+          id: string
+          project_id: string
+          slack_webhook_url: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          project_id: string
+          slack_webhook_url?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          project_id?: string
+          slack_webhook_url?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integrations_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "integrations_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
@@ -218,6 +354,87 @@ export type Database = {
           team_members?: Json | null
         }
         Relationships: []
+      }
+      resources: {
+        Row: {
+          availability: number | null
+          created_at: string | null
+          id: string
+          name: string
+          project_id: string
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          availability?: number | null
+          created_at?: string | null
+          id?: string
+          name: string
+          project_id: string
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          availability?: number | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          project_id?: string
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resources_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resources_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_resources: {
+        Row: {
+          assigned_at: string | null
+          id: string
+          resource_id: string
+          task_id: string
+        }
+        Insert: {
+          assigned_at?: string | null
+          id?: string
+          resource_id: string
+          task_id: string
+        }
+        Update: {
+          assigned_at?: string | null
+          id?: string
+          resource_id?: string
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_resources_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "resources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_resources_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tasks: {
         Row: {
@@ -361,6 +578,10 @@ export type Database = {
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["app_role"]
+      }
+      get_my_claim: {
+        Args: { claim: string }
+        Returns: Json
       }
       has_role: {
         Args: {
