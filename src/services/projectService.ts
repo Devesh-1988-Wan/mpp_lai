@@ -16,40 +16,57 @@ type ProjectInsert = Omit<Project, 'id' | 'created_date' | 'last_modified' | 'cr
 type ProjectUpdate = Partial<Omit<Project, 'id' | 'created_date' | 'created_by'>>
 
 export class ProjectService {
-  // Get all projects for the current user
-  static async getUserProjects() {
+  // Get all projects for the current user
+  static async getUserProjects() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
 
-    const query = supabase
+    const { data, error } = await supabase
       .from('projects')
-      .select(`
-        *,
-        tasks(count),
-        custom_fields(*)
-      `);
+      .select('*')
+      .order('last_modified', { ascending: false });
 
-    const { data, error } = await query.order('last_modified', { ascending: false });
+    if (error) throw error
+    
+    return data?.map(project => ({
+      ...project,
+      status: project.status as 'active' | 'completed' | 'archived',
+      team_members: Array.isArray(project.team_members) ? 
+        (project.team_members as any[]).map(member => String(member)) : 
+        []
+    })) || []
+  }
 
-    if (error) throw error
-    return data
-  }
+  // Get a specific project by ID
+  static async getProject(id: string) {
+    const { data, error } = await supabase
+      .from('projects')
+      .select('*')
+      .eq('id', id)
+      .single()
 
-  // Get a specific project by ID
-  static async getProject(id: string) {
-    const { data, error } = await supabase
-      .from('projects')
-      .select(`
-        *,
-        tasks(*),
-        custom_fields(*)
-      `)
-      .eq('id', id)
-      .single()
-
-    if (error) throw error
-    return data
-  }
+    if (error) throw error
+    
+    // Fetch custom fields separately
+    const { data: customFields } = await supabase
+      .from('custom_fields')
+      .select('*')
+      .eq('project_id', id)
+    
+    return {
+      ...data,
+      status: data.status as 'active' | 'completed' | 'archived',
+      team_members: Array.isArray(data.team_members) ? 
+        (data.team_members as any[]).map(member => String(member)) : 
+        [],
+      customFields: customFields?.map(field => ({
+        ...field,
+        field_type: field.field_type as 'text' | 'number' | 'date' | 'select' | 'boolean',
+        options: field.options as any,
+        default_value: field.default_value as any
+      })) || []
+    }
+  }
 
   // Create a new project
   static async createProject(project: ProjectInsert) {
