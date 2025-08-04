@@ -58,8 +58,19 @@ CREATE POLICY "Project owners and admins can delete projects" ON public.projects
 CREATE POLICY "Users can view tasks for accessible projects" ON tasks
   FOR SELECT USING (
     EXISTS (
-      SELECT 1 FROM projects
-      WHERE projects.id = tasks.project_id
+      SELECT 1 FROM projects p
+      WHERE p.id = tasks.project_id
+      AND (
+        has_role(auth.uid(), 'admin'::app_role) OR
+        has_role(auth.uid(), 'super_admin'::app_role) OR
+        p.created_by = auth.uid() OR
+        auth.uid()::text = ANY(SELECT jsonb_array_elements_text(p.team_members)) OR
+        EXISTS (
+          SELECT 1 FROM project_permissions pp
+          WHERE pp.project_id = p.id
+          AND pp.user_email = auth.email()
+        )
+      )
     )
   );
 
