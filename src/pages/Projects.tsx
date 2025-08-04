@@ -1,4 +1,3 @@
-// src/pages/Projects.tsx
 import { useState } from "react";
 import { Project } from "@/types/project";
 import { ProjectService } from "@/services/projectService";
@@ -193,7 +192,7 @@ const Projects = () => {
                         </div>
                       </div>
                     </CardContent>
-                  </Card>>
+                  </Card>
                 ))}
               </div>
             )}
