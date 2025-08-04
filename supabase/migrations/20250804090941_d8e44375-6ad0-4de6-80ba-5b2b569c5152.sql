@@ -28,24 +28,35 @@ CREATE POLICY "Users can insert their own projects" ON public.projects
 CREATE POLICY "Users can view accessible projects" ON public.projects
   FOR SELECT
   USING (
-    has_role(auth.uid(), 'admin'::app_role) OR 
+    has_role(auth.uid(), 'admin'::app_role) OR
     has_role(auth.uid(), 'super_admin'::app_role) OR
     created_by = auth.uid() OR
-    auth.uid()::text = ANY(SELECT jsonb_array_elements_text(team_members))
+    auth.uid()::text = ANY(SELECT jsonb_array_elements_text(team_members)) OR
+    EXISTS (
+      SELECT 1 FROM project_permissions
+      WHERE project_permissions.project_id = projects.id
+      AND project_permissions.user_email = auth.email()
+    )
   );
 
 CREATE POLICY "Project owners and admins can update projects" ON public.projects
   FOR UPDATE
   USING (
-    has_role(auth.uid(), 'admin'::app_role) OR 
+    has_role(auth.uid(), 'admin'::app_role) OR
     has_role(auth.uid(), 'super_admin'::app_role) OR
-    created_by = auth.uid()
+    created_by = auth.uid() OR
+    EXISTS (
+      SELECT 1 FROM project_permissions
+      WHERE project_permissions.project_id = projects.id
+      AND project_permissions.user_email = auth.email()
+      AND project_permissions.permission_level IN ('edit', 'admin')
+    )
   );
 
 CREATE POLICY "Project owners and admins can delete projects" ON public.projects
   FOR DELETE
   USING (
-    has_role(auth.uid(), 'admin'::app_role) OR 
+    has_role(auth.uid(), 'admin'::app_role) OR
     has_role(auth.uid(), 'super_admin'::app_role) OR
     created_by = auth.uid()
   );
