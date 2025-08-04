@@ -106,7 +106,11 @@ CREATE POLICY "Admins can manage all roles"
 ON public.user_roles
 FOR ALL
 TO authenticated
-USING (public.has_role(auth.uid(), 'admin'));
+USING (EXISTS (
+  SELECT 1
+  FROM public.user_roles
+  WHERE user_id = auth.uid() AND role IN ('admin', 'super_admin')
+));
 
 -- Function to handle new user registration
 CREATE OR REPLACE FUNCTION public.handle_new_user()
@@ -332,7 +336,30 @@ CREATE TRIGGER update_project_on_task_change AFTER INSERT OR UPDATE OR DELETE ON
   FOR EACH ROW EXECUTE PROCEDURE update_project_last_modified();
 
 -- Enable realtime for live updates
-ALTER PUBLICATION supabase_realtime ADD TABLE projects;
-ALTER PUBLICATION supabase_realtime ADD TABLE tasks;
-ALTER PUBLICATION supabase_realtime ADD TABLE custom_fields;
-ALTER PUBLICATION supabase_realtime ADD TABLE activity_log;
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND tablename = 'projects') THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE projects;
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND tablename = 'tasks') THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE tasks;
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND tablename = 'custom_fields') THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE custom_fields;
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND tablename = 'activity_log') THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE activity_log;
+  END IF;
+END $$;
