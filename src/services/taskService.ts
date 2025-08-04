@@ -31,7 +31,19 @@ export class TaskService {
       .order('created_at', { ascending: true })
 
     if (error) throw error
-    return data
+    
+    // Transform the data to match our application types
+    return data?.map(task => ({
+      ...task,
+      task_type: task.task_type as 'task' | 'milestone' | 'deliverable',
+      status: task.status as 'not-started' | 'in-progress' | 'completed' | 'on-hold',
+      dependencies: Array.isArray(task.dependencies) ? 
+        (task.dependencies as any[]).map(dep => String(dep)) : 
+        [],
+      custom_fields: typeof task.custom_fields === 'object' && task.custom_fields !== null ? 
+        task.custom_fields as Record<string, any> : 
+        {}
+    })) || []
   }
 
   // Create a new task
@@ -60,7 +72,19 @@ export class TaskService {
       console.error('Error creating task:', error);
       throw error;
     }
-    return data
+    
+    // Transform the returned data to match our application types
+    return {
+      ...data,
+      task_type: data.task_type as 'task' | 'milestone' | 'deliverable',
+      status: data.status as 'not-started' | 'in-progress' | 'completed' | 'on-hold',
+      dependencies: Array.isArray(data.dependencies) ? 
+        (data.dependencies as any[]).map(dep => String(dep)) : 
+        [],
+      custom_fields: typeof data.custom_fields === 'object' && data.custom_fields !== null ? 
+        data.custom_fields as Record<string, any> : 
+        {}
+    }
   }
 
   // Update a task
@@ -73,7 +97,19 @@ export class TaskService {
       .single()
 
     if (error) throw error
-    return data
+    
+    // Transform the returned data to match our application types
+    return {
+      ...data,
+      task_type: data.task_type as 'task' | 'milestone' | 'deliverable',
+      status: data.status as 'not-started' | 'in-progress' | 'completed' | 'on-hold',
+      dependencies: Array.isArray(data.dependencies) ? 
+        (data.dependencies as any[]).map(dep => String(dep)) : 
+        [],
+      custom_fields: typeof data.custom_fields === 'object' && data.custom_fields !== null ? 
+        data.custom_fields as Record<string, any> : 
+        {}
+    }
   }
 
   // Delete a task

@@ -34,7 +34,7 @@ const Projects = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const { data: projects = [], isLoading } = useQuery<Project[]>({
+  const { data: projects = [], isLoading } = useQuery({
     queryKey: ['projects'],
     queryFn: ProjectService.getUserProjects,
   });

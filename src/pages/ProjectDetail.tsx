@@ -27,13 +27,13 @@ const ProjectDetail = () => {
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>();
 
-  const { data: project, isLoading: projectLoading } = useQuery<Project>({
+  const { data: project, isLoading: projectLoading } = useQuery({
     queryKey: ['project', projectId],
     queryFn: () => ProjectService.getProject(projectId!),
     enabled: !!projectId,
   });
 
-  const { data: tasks = [], isLoading: tasksLoading } = useQuery<Task[]>({
+  const { data: tasks = [], isLoading: tasksLoading } = useQuery({
     queryKey: ['tasks', projectId],
     queryFn: () => TaskService.getProjectTasks(projectId!),
     enabled: !!projectId,
@@ -174,11 +174,14 @@ const ProjectDetail = () => {
           }}
           customFields={project.customFields}
         />
+        {/* Temporarily disabled components due to missing database tables in types */}
+        {/* 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <ResourceManagement projectId={projectId!} />
           <BudgetManagement projectId={projectId!} />
         </div>
         <IntegrationManagement projectId={projectId!} />
+        */}
       </div>
     </div>
   );

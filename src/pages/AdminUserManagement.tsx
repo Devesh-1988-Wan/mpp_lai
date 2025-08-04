@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
 import { Users, UserPlus, Edit, Shield, ShieldCheck } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useRoles } from '@/hooks/useRoles';
 
 interface UserProfile {
   id: string;
@@ -24,7 +25,20 @@ export const AdminUserManagement: React.FC = () => {
   const [selectedUser, setSelectedUser] = useState<string>('');
   const [selectedRole, setSelectedRole] = useState<string>('user');
   const { user } = useAuth();
+  const { canManageUsers } = useRoles();
   const { toast } = useToast();
+
+  // Check if user has permission to manage users
+  if (!canManageUsers()) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold">Access Denied</h1>
+          <p className="text-muted-foreground">You don't have permission to access this page.</p>
+        </div>
+      </div>
+    );
+  }
 
   const fetchUsers = async () => {
     try {

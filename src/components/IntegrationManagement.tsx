@@ -30,7 +30,7 @@ export const IntegrationManagement: React.FC<IntegrationManagementProps> = ({ pr
   }, [integration]);
 
   const saveSlackUrlMutation = useMutation({
-    mutationFn: (url: string) => IntegrationService.saveSlackWebhookUrl(projectId, url),
+    mutationFn: (url: string) => IntegrationService.saveIntegration(projectId, { slack_webhook_url: url }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['integration', projectId] });
       toast({ title: 'Slack webhook URL saved!' });
