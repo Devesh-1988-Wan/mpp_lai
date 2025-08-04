@@ -1,3 +1,4 @@
+// src/pages/Projects.tsx
 import { useState } from "react";
 import { Project } from "@/types/project";
 import { ProjectService } from "@/services/projectService";
@@ -34,7 +35,7 @@ const Projects = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const { data: projects = [], isLoading } = useQuery({
+  const { data: projects = [], isLoading, isError, error } = useQuery({
     queryKey: ['projects'],
     queryFn: ProjectService.getUserProjects,
   });
@@ -98,7 +99,7 @@ const Projects = () => {
     },
   });
 
-  const filteredProjects = projects.filter(project => 
+  const filteredProjects = projects.filter(project =>
     filterStatus === 'all' || project.status === filterStatus
   );
 
@@ -127,7 +128,78 @@ const Projects = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* ... (rest of the JSX remains the same) */}
+      <div className="border-b bg-card">
+        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold">My Projects</h2>
+          <UserMenu />
+        </div>
+      </div>
+
+      <div className="container mx-auto p-6 space-y-6">
+        {showProjectForm ? (
+          <ProjectForm
+            onSave={handleSaveProject}
+            onCancel={() => setShowProjectForm(false)}
+            editProject={editingProject}
+          />
+        ) : (
+          <>
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold">Projects</h1>
+                <p className="text-muted-foreground">
+                  A list of all your projects
+                </p>
+              </div>
+              <Button onClick={() => setShowProjectForm(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                New Project
+              </Button>
+            </div>
+
+            {isLoading && (
+              <div className="text-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary" />
+                <p className="mt-2 text-muted-foreground">Loading projects...</p>
+              </div>
+            )}
+            {isError && (
+              <div className="text-center py-12 text-destructive">
+                <p>Error loading projects: {error.message}</p>
+              </div>
+            )}
+            {!isLoading && !isError && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredProjects.map((project) => (
+                  <Card key={project.id} className="hover:shadow-lg transition-shadow">
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="cursor-pointer" onClick={() => handleOpenProject(project.id)}>{project.name}</CardTitle>
+                        <Badge className={getStatusColor(project.status)}>
+                          {project.status}
+                        </Badge>
+                      </div>
+                      <CardDescription>{project.description}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="w-4 h-4" />
+                          <span>Last modified: {formatDate(project.last_modified)}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Users className="w-4 h-4" />
+                          <span>{project.team_members.length} team members</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 };
