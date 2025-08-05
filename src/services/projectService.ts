@@ -16,12 +16,15 @@ type ProjectInsert = Omit<Project, 'id' | 'created_date' | 'last_modified' | 'cr
 type ProjectUpdate = Partial<Omit<Project, 'id' | 'created_date' | 'created_by'>>
 
 export class ProjectService {
-  // Get all projects for the current user using an RPC call
+  // Get all projects for the current user
   static async getUserProjects() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
 
-    const { data, error } = await supabase.rpc('get_user_projects');
+    const { data, error } = await supabase
+      .from('projects')
+      .select('*')
+      .order('last_modified', { ascending: false });
 
     if (error) throw error
     
