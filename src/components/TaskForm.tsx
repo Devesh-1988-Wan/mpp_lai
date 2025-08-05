@@ -42,6 +42,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
   const [developer, setDeveloper] = useState(editTask?.developer || '');
   const [estimatedDays, setEstimatedDays] = useState<number | undefined>(editTask?.estimated_days);
   const [estimatedHours, setEstimatedHours] = useState<number | undefined>(editTask?.estimated_hours);
+  const [workItemLink, setWorkItemLink] = useState(editTask?.work_item_link || '');
   const [customFieldValues, setCustomFieldValues] = useState<Record<string, any>>(
     editTask?.custom_fields || {}
   );
@@ -68,7 +69,8 @@ export const TaskForm: React.FC<TaskFormProps> = ({
       assignee: assignee.trim(),
       progress,
       dependencies: editTask?.dependencies || [],
-      custom_fields: customFieldValues
+      custom_fields: customFieldValues,
+      work_item_link: workItemLink.trim(),
     };
 
     onSave(taskData);
@@ -339,6 +341,15 @@ export const TaskForm: React.FC<TaskFormProps> = ({
               value={progress}
               onChange={(e) => setProgress(parseInt(e.target.value) || 0)}
               placeholder="0-100"
+            />
+          </div>
+          <div>
+            <Label htmlFor="work_item_link">Work Item Link</Label>
+            <Input
+              id="work_item_link"
+              value={workItemLink}
+              onChange={(e) => setWorkItemLink(e.target.value)}
+              placeholder="https://example.com/work-item/123"
             />
           </div>
         </div>

@@ -21,6 +21,7 @@ type Task = {
   custom_fields: Record<string, any>
   created_at: string
   updated_at: string
+  work_item_link?: string;
 }
 
 type TaskInsert = Omit<Task, 'id' | 'created_at' | 'updated_at'>
@@ -69,7 +70,8 @@ export class TaskService {
       assignee: task.assignee || null,
       progress: task.progress || 0,
       dependencies: task.dependencies || [],
-      custom_fields: task.custom_fields || {}
+      custom_fields: task.custom_fields || {},
+      work_item_link: task.work_item_link || null,
     };
 
     const { data, error } = await supabase

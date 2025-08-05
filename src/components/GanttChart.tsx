@@ -3,7 +3,7 @@ import { format, differenceInDays, startOfWeek, endOfWeek, eachDayOfInterval, ad
 import { Task, TaskStatus, TaskType } from "@/types/project";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Edit2, Trash2 } from "lucide-react";
+import { Edit2, Trash2, Link } from "lucide-react";
 
 interface GanttChartProps {
   tasks: Task[];
@@ -110,6 +110,11 @@ export function GanttChart({ tasks, onEditTask, onDeleteTask }: GanttChartProps)
                   <div className="flex items-center space-x-2">
                     <span className="text-sm">{getTypeIcon(task.task_type)}</span>
                     <span className="font-medium truncate">{task.name}</span>
+                    {task.work_item_link && (
+                      <a href={task.work_item_link} target="_blank" rel="noopener noreferrer">
+                        <Link className="h-4 w-4 text-blue-500" />
+                      </a>
+                    )}
                   </div>
                   <div className="flex items-center space-x-2 mt-1">
                     <Badge 
