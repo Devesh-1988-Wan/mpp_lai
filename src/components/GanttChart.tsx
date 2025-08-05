@@ -79,7 +79,7 @@ export function GanttChart({ tasks, onEditTask, onDeleteTask }: GanttChartProps)
       case 'Critical':
         return '#ffa716';
       case 'High':
-        return '#fff631';
+        return '#F4C430';
       case 'Medium':
         return '#a62dfa';
       case 'Low':
