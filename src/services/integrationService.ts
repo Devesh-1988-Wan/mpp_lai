@@ -8,15 +8,42 @@ export interface Integration {
 
 export class IntegrationService {
   static async getIntegration(projectId: string): Promise<Integration | null> {
-    // Temporarily disabled - table not in types
-    console.warn('Integration service temporarily disabled - table not in types');
-    return null;
+    const { data, error } = await supabase
+      .from('integrations')
+      .select('*')
+      .eq('project_id', projectId)
+      .maybeSingle();
+
+    if (error) throw error;
+    return data;
+  }
+
+  static async saveSlackWebhookUrl(projectId: string, webhookUrl: string): Promise<Integration> {
+    const { data, error } = await supabase
+      .from('integrations')
+      .upsert({ 
+        project_id: projectId, 
+        slack_webhook_url: webhookUrl 
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
   }
 
   static async saveIntegration(projectId: string, integration: Partial<Integration>): Promise<Integration> {
-    // Temporarily disabled
-    console.warn('Integration service temporarily disabled - table not in types');
-    throw new Error('Integration service temporarily disabled');
+    const { data, error } = await supabase
+      .from('integrations')
+      .upsert({ 
+        project_id: projectId, 
+        ...integration 
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
   }
 
   static async sendSlackNotification(webhookUrl: string, message: string): Promise<void> {

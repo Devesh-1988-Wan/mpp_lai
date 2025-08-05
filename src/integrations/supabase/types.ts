@@ -583,6 +583,19 @@ export type Database = {
         Args: { claim: string }
         Returns: Json
       }
+      get_user_projects: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          created_by: string
+          created_date: string | null
+          description: string | null
+          id: string
+          last_modified: string | null
+          name: string
+          status: string | null
+          team_members: Json | null
+        }[]
+      }
       has_role: {
         Args: {
           _user_id: string
