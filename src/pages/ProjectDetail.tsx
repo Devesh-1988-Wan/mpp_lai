@@ -1,132 +1,208 @@
-import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
-import { Project, Task, CustomField } from "@/types/project";
+import { useState, useMemo } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { Task, Project } from "@/types/project";
 import { ProjectService } from "@/services/projectService";
 import { TaskService } from "@/services/taskService";
-import { CustomFieldService } from "@/services/customFieldService";
-import { GanttChart } from "@/components/GanttChart";
+import { ProjectHeader } from "@/components/ProjectHeader";
 import { TaskForm } from "@/components/TaskForm";
+import { DashboardTabs } from "@/components/DashboardTabs";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { UserMenu } from "@/components/auth/UserMenu";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, ArrowLeft, Settings } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { ResourceManagement } from "@/components/ResourceManagement";
+import { BudgetManagement } from "@/components/BudgetManagement";
+import { IntegrationManagement } from "@/components/IntegrationManagement";
+import { IntegrationService } from "@/services/integrationService";
+import { ImportData } from "@/components/ImportData"; // Import the ImportData component
 
 const ProjectDetail = () => {
-  const { projectId } = useParams<{ projectId: string }>();
-  const [project, setProject] = useState<Project | null>(null);
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [customFields, setCustomFields] = useState<CustomField[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
-  const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
+  const { projectId } = useParams<{ projectId: string }>();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    const fetchProjectData = async () => {
-      if (!projectId) return;
-      try {
-        setLoading(true);
-        const [projectData, tasksData, customFieldsData] = await Promise.all([
-          ProjectService.getProject(projectId),
-          TaskService.getProjectTasks(projectId),
-          CustomFieldService.getProjectCustomFields(projectId),
-        ]);
-        setProject(projectData);
-        setTasks(tasksData);
-        setCustomFields(customFieldsData);
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProjectData();
-  }, [projectId]);
+  const [showTaskForm, setShowTaskForm] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | undefined>();
+  const [showImportDialog, setShowImportDialog] = useState(false); // State for import dialog
 
-  const handleTaskSave = async (taskData: Omit<Task, 'id' | 'created_at' | 'updated_at'>) => {
-    if (!projectId) return;
-    try {
-      if (editingTask) {
-        await TaskService.updateTask(editingTask.id, {...taskData, project_id: projectId});
-      } else {
-        await TaskService.createTask({...taskData, project_id: projectId});
-      }
-      setIsTaskFormOpen(false);
-      setEditingTask(undefined);
-      // Refetch tasks
-      const tasksData = await TaskService.getProjectTasks(projectId);
-      setTasks(tasksData);
-    } catch (err: any) {
-      setError(err.message);
-    }
-  };
+  const { data: project, isLoading: projectLoading } = useQuery({
+    queryKey: ['project', projectId],
+    queryFn: () => ProjectService.getProject(projectId!),
+    enabled: !!projectId,
+  });
 
-  const handleEditTask = (task: Task) => {
-    setEditingTask(task);
-    setIsTaskFormOpen(true);
-  };
+  const { data: tasks = [], isLoading: tasksLoading } = useQuery({
+    queryKey: ['tasks', projectId],
+    queryFn: () => TaskService.getProjectTasks(projectId!),
+    enabled: !!projectId,
+  });
 
-  const handleDeleteTask = async (taskId: string) => {
-    if (!projectId) return;
-    if (window.confirm("Are you sure you want to delete this task?")) {
-      try {
-        await TaskService.deleteTask(taskId);
-        // Refetch tasks
-        const tasksData = await TaskService.getProjectTasks(projectId);
-        setTasks(tasksData);
-      } catch (err: any) {
-        setError(err.message);
-      }
-    }
-  };
+  const { data: integration } = useQuery({
+    queryKey: ['integration', projectId],
+    queryFn: () => IntegrationService.getIntegration(projectId!),
+    enabled: !!projectId,
+  });
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error}</div>;
-  if (!project) return <div>Project not found</div>;
+  const createTaskMutation = useMutation({
+    mutationFn: TaskService.createTask,
+    onSuccess: (newTask) => {
+      queryClient.invalidateQueries({ queryKey: ['tasks', projectId] });
+      toast({ title: "Task Created", description: `"${newTask.name}" has been added.` });
+      if (integration?.slack_webhook_url && project) {
+        IntegrationService.sendSlackNotification(
+          integration.slack_webhook_url,
+          `New task created in project "${project.name}": *${newTask.name}*`
+        );
+      }
+    },
+    onError: (error) => {
+      console.error("Error creating task:", error);
+      toast({ title: "Error", description: "Failed to create task.", variant: "destructive" });
+    },
+  });
 
-  return (
-    <div className="container mx-auto p-4">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <Link to="/projects" className="flex items-center text-sm text-gray-500 hover:text-gray-700 mb-2">
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            Back to Projects
-          </Link>
-          <h1 className="text-3xl font-bold">{project.name}</h1>
-          <p className="text-gray-600">{project.description}</p>
-        </div>
-        <div>
-          <Button variant="outline" size="sm" asChild>
-            <Link to={`/projects/${projectId}/settings`}>
-              <Settings className="h-4 w-4 mr-2" />
-              Settings
-            </Link>
-          </Button>
-        </div>
-      </div>
-      
-      <div className="mb-4">
-        <Button onClick={() => { setEditingTask(undefined); setIsTaskFormOpen(true); }}>
-          <PlusCircle className="h-4 w-4 mr-2" />
-          Add New Task
-        </Button>
-      </div>
+  const updateTaskMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<Task> }) => TaskService.updateTask(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks', projectId] });
+      toast({ title: "Task Updated", description: "The task has been updated." });
+    },
+    onError: (error) => {
+      console.error("Error updating task:", error);
+      toast({ title: "Error", description: "Failed to update task.", variant: "destructive" });
+    },
+  });
 
-      {isTaskFormOpen ? (
-        <TaskForm
-          onSave={handleTaskSave}
-          onCancel={() => setIsTaskFormOpen(false)}
-          existingTasks={tasks}
-          editTask={editingTask}
-          customFields={customFields}
-        />
-      ) : (
-        <GanttChart
-          tasks={tasks}
-          onViewTask={handleEditTask}
-          onDeleteTask={handleDeleteTask}
-        />
-      )}
-    </div>
-  );
+  const deleteTaskMutation = useMutation({
+    mutationFn: (taskId: string) => TaskService.deleteTask(taskId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks', projectId] });
+      toast({ title: "Task Deleted", description: "The task has been deleted." });
+    },
+    onError: (error) => {
+      console.error("Error deleting task:", error);
+      toast({ title: "Error", description: "Failed to delete task.", variant: "destructive" });
+    },
+  });
+
+  // Handler for importing tasks
+  const handleImportTasks = async (importedTasks: Omit<Task, 'id' | 'created_at' | 'updated_at'>[]) => {
+    for (const task of importedTasks) {
+      createTaskMutation.mutate({ ...task, project_id: projectId! });
+    }
+    setShowImportDialog(false);
+  };
+
+  const handleSaveTask = async (taskData: Omit<Task, 'id' | 'created_at' | 'updated_at'>) => {
+    if (editingTask) {
+      updateTaskMutation.mutate({ id: editingTask.id, data: taskData });
+    } else {
+      createTaskMutation.mutate({ ...taskData, project_id: projectId! });
+    }
+    setShowTaskForm(false);
+    setEditingTask(undefined);
+  };
+
+  const projectStats = useMemo(() => {
+    if (!tasks) return { total: 0, completed: 0, inProgress: 0, milestones: 0 };
+    
+    const total = tasks.length;
+    const completed = tasks.filter(task => task.status === 'completed').length;
+    const inProgress = tasks.filter(task => task.status === 'in-progress').length;
+    const milestones = tasks.filter(task => task.task_type === 'milestone').length;
+    
+    return { total, completed, inProgress, milestones };
+  }, [tasks]);
+
+  if (projectLoading || tasksLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
+          <h2 className="text-2xl font-bold mb-2">Loading Project...</h2>
+          <p className="text-muted-foreground">Please wait while we load your project.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!project) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-2">Project Not Found</h2>
+          <p className="text-muted-foreground">The project you are looking for does not exist.</p>
+          <Button onClick={() => navigate('/projects')} className="mt-4">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Go Back to Projects
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="border-b bg-card">
+        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
+          <Button onClick={() => navigate('/projects')} variant="outline">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Projects
+          </Button>
+          <UserMenu />
+        </div>
+      </div>
+      <ProjectHeader
+        projectName={project.name}
+        totalTasks={projectStats.total}
+        completedTasks={projectStats.completed}
+        onAddTask={() => setShowTaskForm(true)}
+        onExport={() => {
+          // Implement export functionality here
+        }}
+        onImport={() => setShowImportDialog(true)} // Pass the handler to open the dialog
+      />
+      <div className="container mx-auto p-6 space-y-6">
+        {showTaskForm && (
+          <TaskForm
+            onSave={handleSaveTask}
+            onCancel={() => setShowTaskForm(false)}
+            existingTasks={tasks || []}
+            editTask={editingTask}
+            customFields={project.customFields}
+          />
+        )}
+        {/* Add the ImportData component */}
+        {showImportDialog && (
+            <ImportData
+                onImport={handleImportTasks}
+                existingTasks={tasks}
+                customFields={project.customFields}
+            />
+        )}
+        <DashboardTabs
+          tasks={tasks || []}
+          onEditTask={(task) => { setEditingTask(task); setShowTaskForm(true); }}
+          onDeleteTask={(taskId) => deleteTaskMutation.mutate(taskId)}
+          onExportReport={() => {
+            // Implement export functionality here
+          }}
+          customFields={project.customFields}
+        />
+        {/* Temporarily disabled components due to missing database tables in types */}
+        {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <ResourceManagement projectId={projectId!} />
+          <BudgetManagement projectId={projectId!} />
+        </div>
+        <IntegrationManagement projectId={projectId!} />
+        */}
+      </div>
+    </div>
+  );
 };
 
 export default ProjectDetail;

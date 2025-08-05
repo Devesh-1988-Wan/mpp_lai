@@ -3,17 +3,17 @@ import { format, differenceInDays, startOfWeek, endOfWeek, eachDayOfInterval, ad
 import { Task, TaskStatus, TaskType, TaskPriority, DocsProgressStatus } from "@/types/project";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Eye, Trash2, Link, Gem, Package, List } from "lucide-react"; // Imported List icon
+import { Edit2, Trash2, Link } from "lucide-react";
 
 interface GanttChartProps {
   tasks: Task[];
-  onViewTask: (task: Task) => void;
+  onEditTask: (task: Task) => void;
   onDeleteTask: (taskId: string) => void;
 }
 
-export function GanttChart({ tasks, onViewTask, onDeleteTask }: GanttChartProps) {
+export function GanttChart({ tasks, onEditTask, onDeleteTask }: GanttChartProps) {
 
-  const { dayColumns, taskRows } = useMemo(() => {
+  const { dateRange, dayColumns, taskRows } = useMemo(() => {
     if (tasks.length === 0) {
       const today = new Date();
       return {
@@ -65,13 +65,11 @@ export function GanttChart({ tasks, onViewTask, onDeleteTask }: GanttChartProps)
     }
   };
 
-  const GetTypeIcon = ({ type }: { type: TaskType }) => {
-    const iconProps = { className: "h-4 w-4 text-muted-foreground" };
+  const getTypeIcon = (type: TaskType) => {
     switch (type) {
-      case 'milestone': return <Gem {...iconProps} />;
-      case 'deliverable': return <Package {...iconProps} />;
-      case 'task': return <List {...iconProps} />; // Changed to List icon for task type
-      default: return <List {...iconProps} />; // Fallback icon
+      case 'milestone': return '◆';
+      case 'deliverable': return '📦';
+      default: return '■';
     }
   };
 
@@ -88,7 +86,7 @@ export function GanttChart({ tasks, onViewTask, onDeleteTask }: GanttChartProps)
       case 'Low':
         return '#236dff';
       default:
-        return '#ccc';
+        return '#ccc'; // A default color
     }
   }
 
@@ -143,7 +141,7 @@ export function GanttChart({ tasks, onViewTask, onDeleteTask }: GanttChartProps)
                       className="h-3 w-3 rounded-full"
                       style={{ backgroundColor: getDocsProgressColor(task.docs_progress) }}
                     />
-                    <GetTypeIcon type={task.task_type} />
+                    <span className="text-sm">{getTypeIcon(task.task_type)}</span>
                     <span className="font-medium truncate">{task.name}</span>
                     {task.work_item_link && (
                       <a href={task.work_item_link} target="_blank" rel="noopener noreferrer">
@@ -183,9 +181,9 @@ export function GanttChart({ tasks, onViewTask, onDeleteTask }: GanttChartProps)
                     variant="ghost"
                     size="icon"
                     className="h-6 w-6"
-                    onClick={() => onViewTask(task)}
+                    onClick={() => onEditTask(task)}
                   >
-                    <Eye className="h-3 w-3" />
+                    <Edit2 className="h-3 w-3" />
                   </Button>
                   <Button
                     variant="ghost"
