@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import { TaskPriority } from '@/types/project';
 
 // Define types manually until the auto-generated types are updated
 type Task = {
@@ -8,6 +9,10 @@ type Task = {
   description?: string
   task_type: 'task' | 'milestone' | 'deliverable'
   status: 'not-started' | 'in-progress' | 'completed' | 'on-hold'
+  priority: TaskPriority;
+  developer?: string;
+  estimated_days?: number;
+  estimated_hours?: number;
   start_date: string
   end_date: string
   assignee?: string
@@ -37,6 +42,7 @@ export class TaskService {
       ...task,
       task_type: task.task_type as 'task' | 'milestone' | 'deliverable',
       status: task.status as 'not-started' | 'in-progress' | 'completed' | 'on-hold',
+      priority: task.priority as TaskPriority,
       dependencies: Array.isArray(task.dependencies) ? 
         (task.dependencies as any[]).map(dep => String(dep)) : 
         [],
@@ -54,6 +60,10 @@ export class TaskService {
       description: task.description || null,
       task_type: task.task_type || 'task',
       status: task.status || 'not-started',
+      priority: task.priority || 'Medium',
+      developer: task.developer || null,
+      estimated_days: task.estimated_days || null,
+      estimated_hours: task.estimated_hours || null,
       start_date: task.start_date,
       end_date: task.end_date,
       assignee: task.assignee || null,
@@ -78,6 +88,7 @@ export class TaskService {
       ...data,
       task_type: data.task_type as 'task' | 'milestone' | 'deliverable',
       status: data.status as 'not-started' | 'in-progress' | 'completed' | 'on-hold',
+      priority: data.priority as TaskPriority,
       dependencies: Array.isArray(data.dependencies) ? 
         (data.dependencies as any[]).map(dep => String(dep)) : 
         [],
@@ -103,6 +114,7 @@ export class TaskService {
       ...data,
       task_type: data.task_type as 'task' | 'milestone' | 'deliverable',
       status: data.status as 'not-started' | 'in-progress' | 'completed' | 'on-hold',
+      priority: data.priority as TaskPriority,
       dependencies: Array.isArray(data.dependencies) ? 
         (data.dependencies as any[]).map(dep => String(dep)) : 
         [],

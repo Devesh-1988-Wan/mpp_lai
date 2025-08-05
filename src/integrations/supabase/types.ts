@@ -443,9 +443,13 @@ export type Database = {
           custom_fields: Json | null
           dependencies: Json | null
           description: string | null
+          developer: string | null
           end_date: string
+          estimated_days: number | null
+          estimated_hours: number | null
           id: string
           name: string
+          priority: Database["public"]["Enums"]["task_priority"] | null
           progress: number | null
           project_id: string
           start_date: string
@@ -459,9 +463,13 @@ export type Database = {
           custom_fields?: Json | null
           dependencies?: Json | null
           description?: string | null
+          developer?: string | null
           end_date: string
+          estimated_days?: number | null
+          estimated_hours?: number | null
           id?: string
           name: string
+          priority?: Database["public"]["Enums"]["task_priority"] | null
           progress?: number | null
           project_id: string
           start_date: string
@@ -475,9 +483,13 @@ export type Database = {
           custom_fields?: Json | null
           dependencies?: Json | null
           description?: string | null
+          developer?: string | null
           end_date?: string
+          estimated_days?: number | null
+          estimated_hours?: number | null
           id?: string
           name?: string
+          priority?: Database["public"]["Enums"]["task_priority"] | null
           progress?: number | null
           project_id?: string
           start_date?: string
@@ -583,6 +595,19 @@ export type Database = {
         Args: { claim: string }
         Returns: Json
       }
+      get_user_projects: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          created_by: string
+          created_date: string | null
+          description: string | null
+          id: string
+          last_modified: string | null
+          name: string
+          status: string | null
+          team_members: Json | null
+        }[]
+      }
       has_role: {
         Args: {
           _user_id: string
@@ -592,7 +617,8 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "moderator" | "user" | "Super" | "super_admin"
+      app_role: "admin" | "moderator" | "user" | "Super" | "super_admin",
+      task_priority: "Blocker" | "Critical" | "High" | "Medium" | "Low"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -721,6 +747,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user", "Super", "super_admin"],
+      task_priority: ["Blocker", "Critical", "High", "Medium", "Low"],
     },
   },
 } as const

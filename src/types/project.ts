@@ -1,6 +1,7 @@
 export type TaskType = 'task' | 'milestone' | 'deliverable';
 export type TaskStatus = 'not-started' | 'in-progress' | 'completed' | 'on-hold';
 export type FieldType = 'text' | 'number' | 'date' | 'select' | 'boolean';
+export type TaskPriority = 'Blocker' | 'Critical' | 'High' | 'Medium' | 'Low';
 
 export interface CustomField {
   id: string;
@@ -20,6 +21,10 @@ export interface Task {
   description?: string;
   task_type: TaskType;
   status: TaskStatus;
+  priority: TaskPriority;
+  developer?: string;
+  estimated_days?: number;
+  estimated_hours?: number;
   start_date: string;
   end_date: string;
   dependencies: string[];

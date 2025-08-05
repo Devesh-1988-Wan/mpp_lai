@@ -8,7 +8,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon, Save, X } from "lucide-react";
 import { format } from "date-fns";
-import { Task, TaskStatus, TaskType, CustomField } from "@/types/project";
+import { Task, TaskStatus, TaskType, CustomField, TaskPriority } from "@/types/project";
 import { cn } from "@/lib/utils";
 
 interface TaskFormProps {
@@ -38,6 +38,10 @@ export const TaskForm: React.FC<TaskFormProps> = ({
   );
   const [assignee, setAssignee] = useState(editTask?.assignee || '');
   const [progress, setProgress] = useState(editTask?.progress || 0);
+  const [priority, setPriority] = useState<TaskPriority>(editTask?.priority || 'Medium');
+  const [developer, setDeveloper] = useState(editTask?.developer || '');
+  const [estimatedDays, setEstimatedDays] = useState<number | undefined>(editTask?.estimated_days);
+  const [estimatedHours, setEstimatedHours] = useState<number | undefined>(editTask?.estimated_hours);
   const [customFieldValues, setCustomFieldValues] = useState<Record<string, any>>(
     editTask?.custom_fields || {}
   );
@@ -55,6 +59,10 @@ export const TaskForm: React.FC<TaskFormProps> = ({
       description: description.trim(),
       task_type: taskType,
       status,
+      priority,
+      developer: developer.trim(),
+      estimated_days: estimatedDays,
+      estimated_hours: estimatedHours,
       start_date: startDate.toISOString().split('T')[0], // Convert to YYYY-MM-DD format
       end_date: endDate.toISOString().split('T')[0],
       assignee: assignee.trim(),
@@ -223,6 +231,31 @@ export const TaskForm: React.FC<TaskFormProps> = ({
               </SelectContent>
             </Select>
           </div>
+          <div>
+            <Label htmlFor="priority">Priority</Label>
+            <Select value={priority} onValueChange={(value: TaskPriority) => setPriority(value)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Blocker">Blocker</SelectItem>
+                <SelectItem value="Critical">Critical</SelectItem>
+                <SelectItem value="High">High</SelectItem>
+                <SelectItem value="Medium">Medium</SelectItem>
+                <SelectItem value="Low">Low</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label htmlFor="developer">Developer</Label>
+            <Input
+              id="developer"
+              value={developer}
+              onChange={(e) => setDeveloper(e.target.value)}
+              placeholder="Enter developer name"
+            />
+          </div>
 
           <div>
             <Label>Start Date *</Label>
@@ -270,6 +303,30 @@ export const TaskForm: React.FC<TaskFormProps> = ({
                 />
               </PopoverContent>
             </Popover>
+          </div>
+
+          <div>
+            <Label htmlFor="estimated_days">Estimates in Days</Label>
+            <Input
+              id="estimated_days"
+              type="number"
+              step="0.1"
+              value={estimatedDays}
+              onChange={(e) => setEstimatedDays(parseFloat(e.target.value) || undefined)}
+              placeholder="e.g. 2.5"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="estimated_hours">Estimates in Hours</Label>
+            <Input
+              id="estimated_hours"
+              type="number"
+              step="0.1"
+              value={estimatedHours}
+              onChange={(e) => setEstimatedHours(parseFloat(e.target.value) || undefined)}
+              placeholder="e.g. 20"
+            />
           </div>
 
           <div>
