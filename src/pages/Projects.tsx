@@ -133,7 +133,7 @@ const Projects = () => {
             <Button onClick={() => navigate('/')} variant="outline" size="icon" title="Back to Home">
               <ArrowLeft className="w-4 h-4" />
             </Button>
-            <h2 className="text-lg font-semibold">{user ? `${user.user_metadata.display_name || user.display_name}'s Projects` : "My Projects"}</h2>
+            <h2 className="text-lg font-semibold">{user ? `${user.user_metadata.display_name || user.email}'s Projects` : "My Projects"}</h2>
           </div>
           <UserMenu />
         </div>
