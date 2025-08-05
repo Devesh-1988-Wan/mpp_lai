@@ -16,7 +16,7 @@ const Index = () => {
       <div className="border-b bg-card">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Project Management</h2>
+            <h2 className="text-lg font-semibold">Znode Project Management</h2>
             {user && <UserMenu />}
           </div>
         </div>
@@ -26,7 +26,7 @@ const Index = () => {
       <div className="bg-gradient-to-br from-primary/10 via-background to-secondary/10">
         <div className="container mx-auto px-6 py-24 text-center">
           <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
-            Project Management
+            Amla Project Management
             <span className="text-primary block">Made Simple</span>
           </h1>
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
