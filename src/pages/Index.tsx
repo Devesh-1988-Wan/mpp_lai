@@ -16,7 +16,7 @@ const Index = () => {
       <div className="border-b bg-card">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Project Management</h2>
+            <h2 className="text-lg font-semibold">Znode Project Management</h2>
             {user && <UserMenu />}
           </div>
         </div>
@@ -27,7 +27,7 @@ const Index = () => {
         <div className="container mx-auto px-6 py-24 text-center">
           <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
             Project Management
-            <span className="text-primary block">Made Simple</span>
+            <span style={{ color: '#6bc04b' }} className="block">Made Simple</span>
           </h1>
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
             Plan, track, and manage your projects with powerful tools for teams. 
@@ -36,7 +36,7 @@ const Index = () => {
           
           {user ? (
             <div className="flex gap-4 justify-center">
-              <Button size="lg" onClick={() => navigate('/projects')}>
+              <Button size="lg" className="bg-[#6bc04b] hover:bg-[#5aa43f] text-white" onClick={() => navigate('/projects')}>
                 <FolderOpen className="w-5 h-5 mr-2" />
                 View Projects
               </Button>
