@@ -69,6 +69,7 @@ export function GanttChart({ tasks, onEditTask, onDeleteTask }: GanttChartProps)
     switch (type) {
       case 'milestone': return '◆';
       case 'deliverable': return '📦';
+      case 'task': return '⭐';
       default: return '■';
     }
   };
