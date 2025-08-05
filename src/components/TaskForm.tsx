@@ -8,7 +8,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon, Save, X } from "lucide-react";
 import { format } from "date-fns";
-import { Task, TaskStatus, TaskType, CustomField, TaskPriority } from "@/types/project";
+import { Task, TaskStatus, TaskType, CustomField, TaskPriority, DocsProgressStatus } from "@/types/project";
 import { cn } from "@/lib/utils";
 
 interface TaskFormProps {
@@ -43,6 +43,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
   const [estimatedDays, setEstimatedDays] = useState<number | undefined>(editTask?.estimated_days);
   const [estimatedHours, setEstimatedHours] = useState<number | undefined>(editTask?.estimated_hours);
   const [workItemLink, setWorkItemLink] = useState(editTask?.work_item_link || '');
+  const [docsProgress, setDocsProgress] = useState<DocsProgressStatus>(editTask?.docs_progress || 'Not Started');
   const [customFieldValues, setCustomFieldValues] = useState<Record<string, any>>(
     editTask?.custom_fields || {}
   );
@@ -71,6 +72,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
       dependencies: editTask?.dependencies || [],
       custom_fields: customFieldValues,
       work_item_link: workItemLink.trim(),
+      docs_progress: docsProgress,
     };
 
     onSave(taskData);
@@ -351,6 +353,23 @@ export const TaskForm: React.FC<TaskFormProps> = ({
               onChange={(e) => setWorkItemLink(e.target.value)}
               placeholder="https://example.com/work-item/123"
             />
+          </div>
+
+          <div>
+            <Label htmlFor="docs_progress">Docs Progress</Label>
+            <Select value={docsProgress} onValueChange={(value: DocsProgressStatus) => setDocsProgress(value)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Not Started">Not Started</SelectItem>
+                <SelectItem value="In Analysis-TA">In Analysis-TA</SelectItem>
+                <SelectItem value="In Progress">In Progress</SelectItem>
+                <SelectItem value="Ready or Test Cases">Ready or Test Cases</SelectItem>
+                <SelectItem value="Handover">Handover</SelectItem>
+                <SelectItem value="Not Applicable">Not Applicable</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 

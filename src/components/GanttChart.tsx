@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { format, differenceInDays, startOfWeek, endOfWeek, eachDayOfInterval, addDays, isSameDay } from "date-fns";
-import { Task, TaskStatus, TaskType, TaskPriority } from "@/types/project";
+import { Task, TaskStatus, TaskType, TaskPriority, DocsProgressStatus } from "@/types/project";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Edit2, Trash2, Link } from "lucide-react";
@@ -90,6 +90,18 @@ export function GanttChart({ tasks, onEditTask, onDeleteTask }: GanttChartProps)
     }
   }
 
+  const getDocsProgressColor = (docsProgress: DocsProgressStatus | undefined) => {
+    switch (docsProgress) {
+      case 'Not Started': return '#5c7587';
+      case 'In Analysis-TA': return '#5DBE3F';
+      case 'In Progress': return '#5DBE3F';
+      case 'Ready or Test Cases': return '#FFB302';
+      case 'Handover': return '#2DCCFF';
+      case 'Not Applicable': return '#ff747f';
+      default: return 'transparent';
+    }
+  };
+
   const isToday = (date: Date) => isSameDay(date, new Date());
 
   return (
@@ -125,6 +137,10 @@ export function GanttChart({ tasks, onEditTask, onDeleteTask }: GanttChartProps)
               <div className="flex items-center justify-between">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center space-x-2">
+                    <span
+                      className="h-3 w-3 rounded-full"
+                      style={{ backgroundColor: getDocsProgressColor(task.docs_progress) }}
+                    />
                     <span className="text-sm">{getTypeIcon(task.task_type)}</span>
                     <span className="font-medium truncate">{task.name}</span>
                     {task.work_item_link && (
