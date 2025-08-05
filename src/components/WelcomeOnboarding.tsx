@@ -14,8 +14,8 @@ export function WelcomeOnboarding({ onComplete, onStartProject }: WelcomeOnboard
 
   const steps = [
     {
-      title: "Welcome to Project Manager Pro! 🎉",
-      description: "Your professional project planning companion",
+      title: "Welcome to Znode Project Manager! 🎉",
+      description: "Amla's professional project planning companion",
       content: (
         <div className="text-center space-y-4">
           <div className="mx-auto w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center">
