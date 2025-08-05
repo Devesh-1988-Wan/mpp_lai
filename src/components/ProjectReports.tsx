@@ -1,19 +1,22 @@
 import { useMemo } from "react";
-import { Task } from "@/types/project";
+import { Task, TaskPriority } from "@/types/project";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { 
-  Calendar, 
-  CheckCircle, 
-  Clock, 
-  AlertTriangle, 
-  Users, 
+import {
+  Calendar,
+  CheckCircle,
+  Clock,
+  AlertTriangle,
+  Users,
   Target,
   TrendingUp,
   Download,
-  FileText
+  FileText,
+  Hourglass,
+  BarChart,
+  UserCheck,
 } from "lucide-react";
 import { format, differenceInDays, isAfter, isBefore } from "date-fns";
 
@@ -29,38 +32,58 @@ export function ProjectReports({ tasks, onExportReport }: ProjectReportsProps) {
     const inProgressTasks = tasks.filter(t => t.status === 'in-progress').length;
     const notStartedTasks = tasks.filter(t => t.status === 'not-started').length;
     const onHoldTasks = tasks.filter(t => t.status === 'on-hold').length;
-    
+
     const milestones = tasks.filter(t => t.task_type === 'milestone');
     const completedMilestones = milestones.filter(t => t.status === 'completed').length;
-    
+
     const deliverables = tasks.filter(t => t.task_type === 'deliverable');
     const completedDeliverables = deliverables.filter(t => t.status === 'completed').length;
 
     const now = new Date();
-    const overdueTasks = tasks.filter(t => 
+    const overdueTasks = tasks.filter(t =>
       t.status !== 'completed' && isBefore(new Date(t.end_date), now)
     );
-    
-    const upcomingTasks = tasks.filter(t => 
-      t.status === 'not-started' && 
-      isAfter(new Date(t.start_date), now) && 
+
+    const upcomingTasks = tasks.filter(t =>
+      t.status === 'not-started' &&
+      isAfter(new Date(t.start_date), now) &&
       differenceInDays(new Date(t.start_date), now) <= 7
     );
+
+    const totalEstimatedDays = tasks.reduce((acc, task) => acc + (task.estimated_days || 0), 0);
+    const totalEstimatedHours = tasks.reduce((acc, task) => acc + (task.estimated_hours || 0), 0);
+
+    const tasksByPriority = tasks.reduce((acc, task) => {
+      if (!task.priority) return acc;
+      acc[task.priority] = (acc[task.priority] || 0) + 1;
+      return acc;
+    }, {} as Record<TaskPriority, number>);
 
     // Team performance
     const teamPerformance = tasks.reduce((acc, task) => {
       if (!task.assignee) return acc;
-      
+
       if (!acc[task.assignee]) {
-        acc[task.assignee] = { total: 0, completed: 0, inProgress: 0 };
+        acc[task.assignee] = { total: 0, completed: 0, inProgress: 0, totalEstimatedDays: 0, totalEstimatedHours: 0, tasksByPriority: {} };
       }
-      
+
       acc[task.assignee].total++;
       if (task.status === 'completed') acc[task.assignee].completed++;
       if (task.status === 'in-progress') acc[task.assignee].inProgress++;
-      
+      acc[task.assignee].totalEstimatedDays += task.estimated_days || 0;
+      acc[task.assignee].totalEstimatedHours += task.estimated_hours || 0;
+      if (task.priority) {
+        acc[task.assignee].tasksByPriority[task.priority] = (acc[task.assignee].tasksByPriority[task.priority] || 0) + 1;
+      }
+
       return acc;
-    }, {} as Record<string, { total: number; completed: number; inProgress: number }>);
+    }, {} as Record<string, { total: number; completed: number; inProgress: number, totalEstimatedDays: number, totalEstimatedHours: number, tasksByPriority: Record<TaskPriority, number> }>);
+
+    const tasksByDeveloper = tasks.reduce((acc, task) => {
+        if (!task.developer) return acc;
+        acc[task.developer] = (acc[task.developer] || 0) + 1;
+        return acc;
+    }, {} as Record<string, number>);
 
     // Status distribution for charts
     const statusData = [
@@ -90,11 +113,15 @@ export function ProjectReports({ tasks, onExportReport }: ProjectReportsProps) {
       overdueTasks,
       upcomingTasks,
       teamPerformance,
+      tasksByDeveloper,
       statusData,
       typeData,
       completionRate: totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0,
       milestoneCompletionRate: milestones.length > 0 ? Math.round((completedMilestones / milestones.length) * 100) : 0,
-      deliverableCompletionRate: deliverables.length > 0 ? Math.round((completedDeliverables / deliverables.length) * 100) : 0
+      deliverableCompletionRate: deliverables.length > 0 ? Math.round((completedDeliverables / deliverables.length) * 100) : 0,
+      totalEstimatedDays,
+      totalEstimatedHours,
+      tasksByPriority
     };
   }, [tasks]);
 
@@ -187,6 +214,47 @@ export function ProjectReports({ tasks, onExportReport }: ProjectReportsProps) {
         </Card>
       </div>
 
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <Card className="p-6">
+            <div className="flex items-center justify-between">
+                <div>
+                    <p className="text-sm font-medium text-muted-foreground">Total Estimated Days</p>
+                    <p className="text-3xl font-bold">{analytics.totalEstimatedDays}</p>
+                </div>
+                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                    <Calendar className="w-6 h-6 text-primary" />
+                </div>
+            </div>
+        </Card>
+        <Card className="p-6">
+            <div className="flex items-center justify-between">
+                <div>
+                    <p className="text-sm font-medium text-muted-foreground">Total Estimated Hours</p>
+                    <p className="text-3xl font-bold">{analytics.totalEstimatedHours}</p>
+                </div>
+                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                    <Hourglass className="w-6 h-6 text-primary" />
+                </div>
+            </div>
+        </Card>
+        <Card className="p-6">
+            <div className="flex items-center justify-between">
+                <div>
+                    <p className="text-sm font-medium text-muted-foreground">Tasks by Priority</p>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                        {Object.entries(analytics.tasksByPriority).map(([priority, count]) => (
+                            <Badge key={priority} variant="secondary">{priority}: {count}</Badge>
+                        ))}
+                    </div>
+                </div>
+                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                    <BarChart className="w-6 h-6 text-primary" />
+                </div>
+            </div>
+        </Card>
+      </div>
+
+
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Task Status Distribution */}
@@ -200,8 +268,8 @@ export function ProjectReports({ tasks, onExportReport }: ProjectReportsProps) {
                   <span className="text-sm text-muted-foreground">{item.value} tasks</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Progress 
-                    value={analytics.totalTasks > 0 ? (item.value / analytics.totalTasks) * 100 : 0} 
+                  <Progress
+                    value={analytics.totalTasks > 0 ? (item.value / analytics.totalTasks) * 100 : 0}
                     className="flex-1"
                   />
                   <span className="text-xs text-muted-foreground min-w-[40px]">
@@ -224,8 +292,8 @@ export function ProjectReports({ tasks, onExportReport }: ProjectReportsProps) {
                   <span className="text-sm text-muted-foreground">{item.value} items</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Progress 
-                    value={analytics.totalTasks > 0 ? (item.value / analytics.totalTasks) * 100 : 0} 
+                  <Progress
+                    value={analytics.totalTasks > 0 ? (item.value / analytics.totalTasks) * 100 : 0}
                     className="flex-1"
                   />
                   <span className="text-xs text-muted-foreground min-w-[40px]">
@@ -237,7 +305,6 @@ export function ProjectReports({ tasks, onExportReport }: ProjectReportsProps) {
           </div>
         </Card>
       </div>
-
       {/* Team Performance */}
       {Object.keys(analytics.teamPerformance).length > 0 && (
         <Card className="p-6">
@@ -267,6 +334,22 @@ export function ProjectReports({ tasks, onExportReport }: ProjectReportsProps) {
                       <span>In Progress:</span>
                       <span>{stats.inProgress}</span>
                     </div>
+                    <div className="flex justify-between text-sm">
+                        <span>Total Est. Days:</span>
+                        <span>{stats.totalEstimatedDays}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                        <span>Total Est. Hours:</span>
+                        <span>{stats.totalEstimatedHours}</span>
+                    </div>
+                     <div className="text-sm">
+                        <span>Tasks by Priority:</span>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                            {Object.entries(stats.tasksByPriority).map(([priority, count]) => (
+                                <Badge key={priority} variant="secondary" className="text-xs">{priority}: {count}</Badge>
+                            ))}
+                        </div>
+                    </div>
                     <Progress value={completionRate} className="h-2" />
                   </div>
                 </div>
@@ -275,6 +358,26 @@ export function ProjectReports({ tasks, onExportReport }: ProjectReportsProps) {
           </div>
         </Card>
       )}
+
+      {Object.keys(analytics.tasksByDeveloper).length > 0 && (
+          <Card className="p-6">
+              <h3 className="text-lg font-semibold mb-4 flex items-center">
+                  <UserCheck className="w-5 h-5 mr-2" />
+                  Tasks by Developer
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {Object.entries(analytics.tasksByDeveloper).map(([developer, count]) => (
+                      <div key={developer} className="p-4 border rounded-lg">
+                          <div className="flex items-center justify-between">
+                              <h4 className="font-medium">{developer}</h4>
+                              <Badge variant="outline">{count} tasks</Badge>
+                          </div>
+                      </div>
+                  ))}
+              </div>
+          </Card>
+      )}
+
 
       {/* Issues & Recommendations */}
       {(analytics.overdueTasks.length > 0 || analytics.upcomingTasks.length > 0) && (
