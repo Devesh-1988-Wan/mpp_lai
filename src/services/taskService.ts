@@ -54,12 +54,16 @@ export class TaskService {
 
   // Create a new task
   static async createTask(task: any) {
-    const taskData = {
+    const taskData: TaskInsert = {
       project_id: task.project_id,
       name: task.name,
       description: task.description || null,
       task_type: task.task_type || 'task',
       status: task.status || 'not-started',
+      priority: task.priority || 'Medium',
+      developer: task.developer || null,
+      estimated_days: task.estimated_days || null,
+      estimated_hours: task.estimated_hours || null,
       start_date: task.start_date,
       end_date: task.end_date,
       assignee: task.assignee || null,
@@ -96,15 +100,9 @@ export class TaskService {
 
   // Update a task
   static async updateTask(id: string, updates: any) {
-    const updatesCopy = { ...updates };
-    delete updatesCopy.priority;
-    delete updatesCopy.developer;
-    delete updatesCopy.estimated_days;
-    delete updatesCopy.estimated_hours;
-
     const { data, error } = await supabase
       .from('tasks')
-      .update(updatesCopy)
+      .update(updates)
       .eq('id', id)
       .select()
       .single()
