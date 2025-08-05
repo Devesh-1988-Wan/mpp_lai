@@ -150,7 +150,7 @@ const Projects = () => {
                   A list of all your projects
                 </p>
               </div>
-              <Button onClick={() => setShowProjectForm(true) style={{ backgroundColor: '#f0be48' }}}>
+              <Button onClick={() => setShowProjectForm(true)} style={{ backgroundColor: '#f0be48' }}>
                 <Plus className="w-4 h-4 mr-2" />
                 New Project
               </Button>
