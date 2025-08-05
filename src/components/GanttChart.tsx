@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { format, differenceInDays, startOfWeek, endOfWeek, eachDayOfInterval, addDays, isSameDay } from "date-fns";
-import { Task, TaskStatus, TaskType } from "@/types/project";
+import { Task, TaskStatus, TaskType, TaskPriority } from "@/types/project";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Edit2, Trash2, Link } from "lucide-react";
@@ -12,7 +12,7 @@ interface GanttChartProps {
 }
 
 export function GanttChart({ tasks, onEditTask, onDeleteTask }: GanttChartProps) {
-  
+
   const { dateRange, dayColumns, taskRows } = useMemo(() => {
     if (tasks.length === 0) {
       const today = new Date();
@@ -29,7 +29,7 @@ export function GanttChart({ tasks, onEditTask, onDeleteTask }: GanttChartProps)
 
     const start = startOfWeek(minDate);
     const end = endOfWeek(maxDate);
-    
+
     const days = eachDayOfInterval({ start, end });
     const totalDays = days.length;
 
@@ -72,6 +72,23 @@ export function GanttChart({ tasks, onEditTask, onDeleteTask }: GanttChartProps)
     }
   };
 
+  const getPriorityColor = (priority: TaskPriority) => {
+    switch (priority) {
+      case 'Blocker':
+        return '#ff3707';
+      case 'Critical':
+        return '#ffa716';
+      case 'High':
+        return '#fff631';
+      case 'Medium':
+        return '#a62dfa';
+      case 'Low':
+        return '#236dff';
+      default:
+        return '#ccc'; // A default color
+    }
+  }
+
   const isToday = (date: Date) => isSameDay(date, new Date());
 
   return (
@@ -90,9 +107,8 @@ export function GanttChart({ tasks, onEditTask, onDeleteTask }: GanttChartProps)
             {dayColumns.map((day, index) => (
               <div
                 key={index}
-                className={`flex-1 min-w-[40px] p-2 text-center text-xs border-r ${
-                  isToday(day) ? 'bg-primary/20 font-semibold text-primary' : ''
-                }`}
+                className={`flex-1 min-w-[40px] p-2 text-center text-xs border-r ${isToday(day) ? 'bg-primary/20 font-semibold text-primary' : ''
+                  }`}
               >
                 <div>{format(day, 'dd')}</div>
                 <div className="text-muted-foreground">{format(day, 'MMM')}</div>
@@ -117,12 +133,24 @@ export function GanttChart({ tasks, onEditTask, onDeleteTask }: GanttChartProps)
                     )}
                   </div>
                   <div className="flex items-center space-x-2 mt-1">
-                    <Badge 
-                      variant="outline" 
+                    <Badge
+                      variant="outline"
                       className={`text-xs ${getStatusColor(task.status)} text-white border-0`}
                     >
                       {task.status.replace('-', ' ')}
                     </Badge>
+                    <Badge
+                      variant="outline"
+                      style={{
+                        backgroundColor: getPriorityColor(task.priority),
+                        color: '#fff',
+                        border: 0,
+                      }}
+                      className="text-xs"
+                    >
+                      {task.priority}
+                    </Badge>
+
                     {task.assignee && (
                       <span className="text-xs text-muted-foreground">{task.assignee}</span>
                     )}
@@ -132,17 +160,17 @@ export function GanttChart({ tasks, onEditTask, onDeleteTask }: GanttChartProps)
                   </div>
                 </div>
                 <div className="flex space-x-1">
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     className="h-6 w-6"
                     onClick={() => onEditTask(task)}
                   >
                     <Edit2 className="h-3 w-3" />
                   </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     className="h-6 w-6 text-destructive hover:text-destructive"
                     onClick={() => onDeleteTask(task.id)}
                   >
@@ -152,17 +180,16 @@ export function GanttChart({ tasks, onEditTask, onDeleteTask }: GanttChartProps)
               </div>
             </div>
             <div className="flex-1 relative p-3">
-              <div 
-                className={`absolute top-1/2 transform -translate-y-1/2 h-6 rounded ${getStatusColor(task.status)} ${
-                  task.task_type === 'milestone' ? 'h-3 rotate-45' : ''
-                }`}
+              <div
+                className={`absolute top-1/2 transform -translate-y-1/2 h-6 rounded ${getStatusColor(task.status)} ${task.task_type === 'milestone' ? 'h-3 rotate-45' : ''
+                  }`}
                 style={{
                   left: `${startOffset}%`,
                   width: task.task_type === 'milestone' ? '12px' : `${width}%`
                 }}
               >
                 {task.task_type !== 'milestone' && (
-                  <div 
+                  <div
                     className="h-full bg-white/20 rounded-l"
                     style={{ width: `${task.progress}%` }}
                   />
