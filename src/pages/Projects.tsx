@@ -130,10 +130,10 @@ const Projects = () => {
       <div className="border-b bg-card">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <Button onClick={() => navigate('/')} variant="outline" size="icon">
+            <Button onClick={() => navigate('/')} variant="outline" size="icon" title="Back to Home">
               <ArrowLeft className="w-4 h-4" />
             </Button>
-            <h2 className="text-lg font-semibold">My Projects</h2>
+            <h2 className="text-lg font-semibold">{user ? `${user.user_metadata.display_name || user.email}'s Projects` : "My Projects"}</h2>
           </div>
           <UserMenu />
         </div>
