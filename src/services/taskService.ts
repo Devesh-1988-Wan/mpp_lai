@@ -22,6 +22,7 @@ type Task = {
   created_at: string
   updated_at: string
   work_item_link?: string;
+  docs_progress?: 'Not Started' | 'In Analysis-TA' | 'In Progress' | 'Ready or Test Cases' | 'Handover' | 'Not Applicable';
 }
 
 type TaskInsert = Omit<Task, 'id' | 'created_at' | 'updated_at'>
@@ -49,7 +50,8 @@ export class TaskService {
         [],
       custom_fields: typeof task.custom_fields === 'object' && task.custom_fields !== null ? 
         task.custom_fields as Record<string, any> : 
-        {}
+        {},
+      docs_progress: task.docs_progress as 'Not Started' | 'In Analysis-TA' | 'In Progress' | 'Ready or Test Cases' | 'Handover' | 'Not Applicable' | undefined,
     })) || []
   }
 
@@ -72,6 +74,7 @@ export class TaskService {
       dependencies: task.dependencies || [],
       custom_fields: task.custom_fields || {},
       work_item_link: task.work_item_link || null,
+      docs_progress: task.docs_progress || 'Not Started',
     };
 
     const { data, error } = await supabase
@@ -96,7 +99,8 @@ export class TaskService {
         [],
       custom_fields: typeof data.custom_fields === 'object' && data.custom_fields !== null ? 
         data.custom_fields as Record<string, any> : 
-        {}
+        {},
+      docs_progress: data.docs_progress as 'Not Started' | 'In Analysis-TA' | 'In Progress' | 'Ready or Test Cases' | 'Handover' | 'Not Applicable' | undefined
     }
   }
 
@@ -122,7 +126,8 @@ export class TaskService {
         [],
       custom_fields: typeof data.custom_fields === 'object' && data.custom_fields !== null ? 
         data.custom_fields as Record<string, any> : 
-        {}
+        {},
+      docs_progress: data.docs_progress as 'Not Started' | 'In Analysis-TA' | 'In Progress' | 'Ready or Test Cases' | 'Handover' | 'Not Applicable' | undefined
     }
   }
 

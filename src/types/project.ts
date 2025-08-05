@@ -2,6 +2,13 @@ export type TaskType = 'task' | 'milestone' | 'deliverable';
 export type TaskStatus = 'not-started' | 'in-progress' | 'completed' | 'on-hold';
 export type FieldType = 'text' | 'number' | 'date' | 'select' | 'boolean';
 export type TaskPriority = 'Blocker' | 'Critical' | 'High' | 'Medium' | 'Low';
+export type DocsProgressStatus =
+  | 'Not Started'
+  | 'In Analysis-TA'
+  | 'In Progress'
+  | 'Ready or Test Cases'
+  | 'Handover'
+  | 'Not Applicable';
 
 export interface CustomField {
   id: string;
@@ -34,6 +41,7 @@ export interface Task {
   created_at: string;
   updated_at: string;
   work_item_link?: string;
+  docs_progress?: DocsProgressStatus;
 }
 
 export interface Project {

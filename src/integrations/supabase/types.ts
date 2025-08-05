@@ -456,6 +456,7 @@ export type Database = {
           status: string | null
           task_type: string | null
           updated_at: string | null
+          docs_progress: Database["public"]["Enums"]["docs_progress_status"] | null
         }
         Insert: {
           assignee?: string | null
@@ -476,6 +477,7 @@ export type Database = {
           status?: string | null
           task_type?: string | null
           updated_at?: string | null
+          docs_progress?: Database["public"]["Enums"]["docs_progress_status"] | null
         }
         Update: {
           assignee?: string | null
@@ -496,6 +498,7 @@ export type Database = {
           status?: string | null
           task_type?: string | null
           updated_at?: string | null
+          docs_progress?: Database["public"]["Enums"]["docs_progress_status"] | null
         }
         Relationships: [
           {
@@ -618,7 +621,8 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user" | "Super" | "super_admin",
-      task_priority: "Blocker" | "Critical" | "High" | "Medium" | "Low"
+      task_priority: "Blocker" | "Critical" | "High" | "Medium" | "Low",
+      docs_progress_status: "Not Started" | "In Analysis-TA" | "In Progress" | "Ready or Test Cases" | "Handover" | "Not Applicable"
     }
     CompositeTypes: {
       [_ in never]: never
