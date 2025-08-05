@@ -4,7 +4,7 @@ import { ProjectService } from "@/services/projectService";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, FolderOpen, Calendar, Users, Archive, Loader2 } from "lucide-react";
+import { Plus, FolderOpen, Calendar, Users, Archive, Loader2, ArrowLeft } from "lucide-react";
 import { format, isValid } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { ProjectForm } from "@/components/ProjectForm";
@@ -129,7 +129,12 @@ const Projects = () => {
     <div className="min-h-screen bg-background">
       <div className="border-b bg-card">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">My Projects</h2>
+          <div className="flex items-center space-x-4">
+            <Button onClick={() => navigate('/')} variant="outline" size="icon">
+              <ArrowLeft className="w-4 h-4" />
+            </Button>
+            <h2 className="text-lg font-semibold">My Projects</h2>
+          </div>
           <UserMenu />
         </div>
       </div>
