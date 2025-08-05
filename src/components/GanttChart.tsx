@@ -139,8 +139,9 @@ export function GanttChart({ tasks, onEditTask, onDeleteTask }: GanttChartProps)
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center space-x-2">
                     <span
-                      className="h-3 w-3 rounded-full"
+                      className="h-3 w-3 rounded-full border"
                       style={{ backgroundColor: getDocsProgressColor(task.docs_progress) }}
+                      title={task.docs_progress} // Optional: shows status on hover
                     />
                     <span className="text-sm">{getTypeIcon(task.task_type)}</span>
                     <span className="font-medium truncate">{task.name}</span>
