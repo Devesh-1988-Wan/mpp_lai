@@ -3,11 +3,11 @@ import { format, differenceInDays, startOfWeek, endOfWeek, eachDayOfInterval, ad
 import { Task, TaskStatus, TaskType, TaskPriority, DocsProgressStatus } from "@/types/project";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Eye, Trash2, Link, Square, Gem, Package } from "lucide-react"; // Changed Edit2 to Eye
+import { Eye, Trash2, Link, Gem, Package, List } from "lucide-react"; // Imported List icon
 
 interface GanttChartProps {
   tasks: Task[];
-  onViewTask: (task: Task) => void; // Renamed from onEditTask for clarity
+  onViewTask: (task: Task) => void;
   onDeleteTask: (taskId: string) => void;
 }
 
@@ -70,7 +70,8 @@ export function GanttChart({ tasks, onViewTask, onDeleteTask }: GanttChartProps)
     switch (type) {
       case 'milestone': return <Gem {...iconProps} />;
       case 'deliverable': return <Package {...iconProps} />;
-      default: return <Square {...iconProps} />;
+      case 'task': return <List {...iconProps} />; // Changed to List icon for task type
+      default: return <List {...iconProps} />; // Fallback icon
     }
   };
 
@@ -182,7 +183,7 @@ export function GanttChart({ tasks, onViewTask, onDeleteTask }: GanttChartProps)
                     variant="ghost"
                     size="icon"
                     className="h-6 w-6"
-                    onClick={() => onViewTask(task)} // Changed to onViewTask
+                    onClick={() => onViewTask(task)}
                   >
                     <Eye className="h-3 w-3" />
                   </Button>
