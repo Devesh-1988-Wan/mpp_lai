@@ -60,6 +60,7 @@ export function GanttChart({ tasks, onEditTask, onDeleteTask }: GanttChartProps)
       case 'completed': return 'bg-success';
       case 'in-progress': return 'bg-primary';
       case 'on-hold': return 'bg-warning';
+      case 'not-started': return 'bg-[#B2BEB5]';
       default: return 'bg-muted';
     }
   };
