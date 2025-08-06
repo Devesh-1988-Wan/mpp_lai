@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { getResources, addResource, updateResource, deleteResource } from '../services/resourceService';
-import { Resource } from '../types';
+import { getResources, addResource, deleteResource } from '../services/resourceService';
+import { Resource } from '../types/project'; // Corrected import path
 
 interface Props {
   projectId: string;
@@ -13,28 +13,40 @@ const ResourceManagement: React.FC<Props> = ({ projectId }) => {
 
   useEffect(() => {
     const fetchResources = async () => {
-      const resources = await getResources(projectId);
-      setResources(resources);
+      try {
+        const resources = await getResources(projectId);
+        setResources(resources);
+      } catch (error) {
+        console.error("Failed to fetch resources", error);
+      }
     };
     fetchResources();
   }, [projectId]);
 
   const handleAddResource = async () => {
     if (newResourceName && newResourceType) {
-      const newResource = await addResource({
-        project_id: projectId,
-        name: newResourceName,
-        type: newResourceType,
-      });
-      setResources([...resources, newResource]);
-      setNewResourceName('');
-      setNewResourceType('');
+      try {
+        const newResource = await addResource({
+          project_id: projectId,
+          name: newResourceName,
+          type: newResourceType,
+        });
+        setResources([...resources, newResource]);
+        setNewResourceName('');
+        setNewResourceType('');
+      } catch (error) {
+        console.error("Failed to add resource", error);
+      }
     }
   };
 
   const handleDeleteResource = async (id: string) => {
-    await deleteResource(id);
-    setResources(resources.filter(r => r.id !== id));
+    try {
+      await deleteResource(id);
+      setResources(resources.filter(r => r.id !== id));
+    } catch (error) {
+      console.error("Failed to delete resource", error);
+    }
   };
 
   return (
