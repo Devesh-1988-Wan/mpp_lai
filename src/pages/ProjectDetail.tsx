@@ -3,15 +3,15 @@ import { useParams } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchProjectById } from '../store/slices/projectSlice';
 import { RootState, AppDispatch } from '../store/store';
-import { GanttChart } from '../components/GanttChart'; // Corrected import
-import TaskForm from '../components/TaskForm';
-import ProjectHeader from '../components/ProjectHeader';
+import { GanttChart } from '../components/GanttChart';
+import { TaskForm } from '../components/TaskForm';
+import { ProjectHeader } from '../components/ProjectHeader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import ResourceManagement from '../components/ResourceManagement';
 import BudgetManagement from '../components/BudgetManagement';
 import IntegrationManagement from '../components/IntegrationManagement';
-import ProjectPermissions from '../components/ProjectPermissions';
-import ProjectReports from '../components/ProjectReports';
+import { ProjectPermissions } from '../components/ProjectPermissions';
+import { ProjectReports } from '../components/ProjectReports';
 import { Skeleton } from '../components/ui/skeleton';
 
 const ProjectDetail: React.FC = () => {
