@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getIntegrations, saveIntegration } from '../services/integrationService';
-import { Integration } from '../types';
+import { Integration } from '../types/project'; // Corrected import path
 
 interface Props {
   projectId: string;
@@ -12,23 +12,34 @@ const IntegrationManagement: React.FC<Props> = ({ projectId }) => {
 
   useEffect(() => {
     const fetchIntegrations = async () => {
-      const integrations = await getIntegrations(projectId);
-      setIntegrations(integrations);
-      const slackIntegration = integrations.find(i => i.service === 'slack');
-      if (slackIntegration) {
-        setSlackWebhook(slackIntegration.credentials.webhook_url);
+      try {
+        const integrations = await getIntegrations(projectId);
+        setIntegrations(integrations);
+        const slackIntegration = integrations.find(i => i.service === 'slack');
+        if (slackIntegration && slackIntegration.credentials && typeof slackIntegration.credentials === 'object' && 'webhook_url' in slackIntegration.credentials) {
+            setSlackWebhook((slackIntegration.credentials as { webhook_url: string }).webhook_url);
+        }
+      } catch (error) {
+        console.error("Failed to fetch integrations", error);
       }
     };
     fetchIntegrations();
   }, [projectId]);
 
   const handleSaveSlack = async () => {
-    await saveIntegration({
-      project_id: projectId,
-      service: 'slack',
-      credentials: { webhook_url: slackWebhook },
-    });
-    alert('Slack integration saved!');
+    try {
+      const existingIntegration = integrations.find(i => i.service === 'slack');
+      await saveIntegration({
+        id: existingIntegration?.id,
+        project_id: projectId,
+        service: 'slack',
+        credentials: { webhook_url: slackWebhook },
+      });
+      alert('Slack integration saved!');
+    } catch (error) {
+      console.error("Failed to save Slack integration", error);
+      alert('Failed to save Slack integration.');
+    }
   };
 
   return (
