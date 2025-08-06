@@ -126,7 +126,7 @@ const Projects = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <div className="border-b bg-card">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-4">
@@ -139,7 +139,7 @@ const Projects = () => {
         </div>
       </div>
 
-      <div className="container mx-auto p-6 space-y-6">
+      <main className="flex-grow container mx-auto p-6 space-y-6">
         {showProjectForm ? (
           <ProjectForm
             onSave={handleSaveProject}
@@ -203,7 +203,12 @@ const Projects = () => {
             )}
           </>
         )}
-      </div>
+      </main>
+      <footer className="bg-card border-t">
+        <div className="container mx-auto px-6 py-4 text-center text-muted-foreground">
+          <p>Designed by Amla Commerce</p>
+        </div>
+      </footer>
     </div>
   );
 };
