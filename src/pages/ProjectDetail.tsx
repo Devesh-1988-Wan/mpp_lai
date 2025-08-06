@@ -146,7 +146,7 @@ const ProjectDetail = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <div className="border-b bg-card">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
           <Button onClick={() => navigate('/projects')} variant="outline">
@@ -166,7 +166,7 @@ const ProjectDetail = () => {
         }}
         onImport={() => setShowImportDialog(true)} // Pass the handler to open the dialog
       />
-      <div className="container mx-auto p-6 space-y-6">
+      <main className="flex-grow container mx-auto p-6 space-y-6">
         {showTaskForm && (
           <TaskForm
             onSave={handleSaveTask}
@@ -200,7 +200,12 @@ const ProjectDetail = () => {
         </div>
         <IntegrationManagement projectId={projectId!} />
         */}
-      </div>
+      </main>
+      <footer className="bg-card border-t">
+        <div className="container mx-auto px-6 py-4 text-center text-muted-foreground">
+          <p>Designed by Amla Commerce</p>
+        </div>
+      </footer>
     </div>
   );
 };
