@@ -8,7 +8,7 @@ import TaskForm from '../components/TaskForm';
 import ProjectHeader from '../components/ProjectHeader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import ResourceManagement from '../components/ResourceManagement';
-import BudgetManagement from '../components/BudgetManagement'; // Corrected: Changed from named to default import
+import BudgetManagement from '../components/BudgetManagement';
 import IntegrationManagement from '../components/IntegrationManagement';
 import ProjectPermissions from '../components/ProjectPermissions';
 import ProjectReports from '../components/ProjectReports';
@@ -47,7 +47,14 @@ const ProjectDetail: React.FC = () => {
 
   return (
     <div className="p-4 md:p-8">
-      <ProjectHeader project={currentProject} />
+      <ProjectHeader
+        projectName={currentProject.name}
+        totalTasks={currentProject.tasks?.length || 0}
+        completedTasks={currentProject.tasks?.filter(t => t.status === 'completed').length || 0}
+        onAddTask={() => {}}
+        onExport={() => {}}
+        onImport={() => {}}
+      />
       <Tabs defaultValue="gantt" className="mt-4">
         <TabsList>
           <TabsTrigger value="gantt">Gantt Chart</TabsTrigger>
@@ -59,11 +66,15 @@ const ProjectDetail: React.FC = () => {
           <TabsTrigger value="reports">Reports</TabsTrigger>
         </TabsList>
         <TabsContent value="gantt" className="mt-4">
-          <GanttChart tasks={currentProject.tasks || []} />
+          <GanttChart tasks={currentProject.tasks || []} onEditTask={() => {}} onDeleteTask={() => {}} />
         </TabsContent>
         <TabsContent value="tasks" className="mt-4">
-          <TaskForm projectId={currentProject.id} />
-          {/* You might want a task list component here */}
+          <TaskForm
+            onSave={() => {}}
+            onCancel={() => {}}
+            existingTasks={currentProject.tasks || []}
+            customFields={currentProject.customFields || []}
+          />
         </TabsContent>
         <TabsContent value="resources" className="mt-4">
             <ResourceManagement projectId={currentProject.id} />
@@ -75,10 +86,10 @@ const ProjectDetail: React.FC = () => {
             <IntegrationManagement projectId={currentProject.id} />
         </TabsContent>
         <TabsContent value="permissions" className="mt-4">
-            <ProjectPermissions projectId={currentProject.id} />
+            <ProjectPermissions projectId={currentProject.id} teamMembers={currentProject.team_members} onUpdateTeamMembers={() => {}} isOwner={true} />
         </TabsContent>
         <TabsContent value="reports" className="mt-4">
-            <ProjectReports project={currentProject} />
+            <ProjectReports tasks={currentProject.tasks || []} onExportReport={() => {}} />
         </TabsContent>
       </Tabs>
     </div>
