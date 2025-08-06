@@ -1,62 +1,72 @@
+// src/components/IntegrationManagement.tsx
 import React, { useState, useEffect } from 'react';
-import { getIntegrations, saveIntegration } from '../services/integrationService';
-import { Integration } from '../types/project'; // Corrected import path
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Integration, IntegrationService } from '@/services/integrationService';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Save } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
-interface Props {
+interface IntegrationManagementProps {
   projectId: string;
 }
 
-const IntegrationManagement: React.FC<Props> = ({ projectId }) => {
-  const [integrations, setIntegrations] = useState<Integration[]>([]);
-  const [slackWebhook, setSlackWebhook] = useState('');
+export const IntegrationManagement: React.FC<IntegrationManagementProps> = ({ projectId }) => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  const [slackUrl, setSlackUrl] = useState('');
+
+  const { data: integration, isLoading } = useQuery<Integration | null>({
+    queryKey: ['integration', projectId],
+    queryFn: () => IntegrationService.getIntegration(projectId),
+  });
 
   useEffect(() => {
-    const fetchIntegrations = async () => {
-      try {
-        const integrations = await getIntegrations(projectId);
-        setIntegrations(integrations);
-        const slackIntegration = integrations.find(i => i.service === 'slack');
-        if (slackIntegration && slackIntegration.credentials && typeof slackIntegration.credentials === 'object' && 'webhook_url' in slackIntegration.credentials) {
-            setSlackWebhook((slackIntegration.credentials as { webhook_url: string }).webhook_url);
-        }
-      } catch (error) {
-        console.error("Failed to fetch integrations", error);
-      }
-    };
-    fetchIntegrations();
-  }, [projectId]);
-
-  const handleSaveSlack = async () => {
-    try {
-      const existingIntegration = integrations.find(i => i.service === 'slack');
-      await saveIntegration({
-        id: existingIntegration?.id,
-        project_id: projectId,
-        service: 'slack',
-        credentials: { webhook_url: slackWebhook },
-      });
-      alert('Slack integration saved!');
-    } catch (error) {
-      console.error("Failed to save Slack integration", error);
-      alert('Failed to save Slack integration.');
+    if (integration?.slack_webhook_url) {
+      setSlackUrl(integration.slack_webhook_url);
     }
+  }, [integration]);
+
+  const saveSlackUrlMutation = useMutation({
+    mutationFn: (url: string) => IntegrationService.saveSlackWebhookUrl(projectId, url),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['integration', projectId] });
+      toast({ title: 'Slack webhook URL saved!' });
+    },
+    onError: () => {
+      toast({ title: 'Failed to save Slack webhook URL', variant: 'destructive' });
+    },
+  });
+
+  const handleSave = () => {
+    saveSlackUrlMutation.mutate(slackUrl);
   };
 
   return (
-    <div>
-      <h2>Integration Management</h2>
-      <div>
-        <h3>Slack</h3>
-        <input
-          type="text"
-          value={slackWebhook}
-          onChange={(e) => setSlackWebhook(e.target.value)}
-          placeholder="Slack Webhook URL"
-        />
-        <button onClick={handleSaveSlack}>Save</button>
-      </div>
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>Integrations</CardTitle>
+        <CardDescription>Connect with other services like Slack.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-2">
+          <label htmlFor="slack-url" className="font-medium">Slack Webhook URL</label>
+          <div className="flex gap-2">
+            <Input
+              id="slack-url"
+              placeholder="https://hooks.slack.com/services/..."
+              value={slackUrl}
+              onChange={(e) => setSlackUrl(e.target.value)}
+            />
+            <Button onClick={handleSave} disabled={saveSlackUrlMutation.isPending}>
+              <Save className="h-4 w-4 mr-2" />
+              Save
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
-
-export default IntegrationManagement;

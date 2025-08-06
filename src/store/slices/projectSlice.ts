@@ -1,8 +1,5 @@
-import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { Project, Task, CustomField } from "@/types/project";
-import { ProjectService } from "@/services/projectService";
-import { TaskService } from "@/services/taskService";
-import { CustomFieldService } from "@/services/customFieldService";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { Project } from "@/types/project";
 
 interface ProjectState {
   projects: Project[];
@@ -17,20 +14,6 @@ const initialState: ProjectState = {
   loading: false,
   error: null,
 };
-
-export const fetchProjectById = createAsyncThunk(
-  "projects/fetchById",
-  async (projectId: string, { rejectWithValue }) => {
-    try {
-      const project = await ProjectService.getProject(projectId);
-      const tasks = await TaskService.getProjectTasks(projectId);
-      const customFields = await CustomFieldService.getProjectCustomFields(projectId);
-      return { ...project, tasks, customFields };
-    } catch (error: any) {
-      return rejectWithValue(error.message);
-    }
-  }
-);
 
 const projectSlice = createSlice({
   name: "projects",
@@ -48,21 +31,6 @@ const projectSlice = createSlice({
     setError: (state, action: PayloadAction<string | null>) => {
       state.error = action.payload;
     },
-  },
-  extraReducers: (builder) => {
-    builder
-      .addCase(fetchProjectById.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(fetchProjectById.fulfilled, (state, action: PayloadAction<Project>) => {
-        state.loading = false;
-        state.currentProject = action.payload;
-      })
-      .addCase(fetchProjectById.rejected, (state, action: PayloadAction<any>) => {
-        state.loading = false;
-        state.error = action.payload;
-      });
   },
 });
 

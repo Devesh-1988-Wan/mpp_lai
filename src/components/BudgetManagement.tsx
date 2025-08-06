@@ -1,70 +1,88 @@
-import React, { useState, useEffect } from 'react';
-import { getBudgets, addBudget } from '../services/budgetService';
-import { Budget } from '../types/project'; // Corrected import path
+// src/components/BudgetManagement.tsx
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Budget, Expense, BudgetService } from '@/services/budgetService';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Plus } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
-interface Props {
+interface BudgetManagementProps {
   projectId: string;
 }
 
-const BudgetManagement: React.FC<Props> = ({ projectId }) => {
-  const [budgets, setBudgets] = useState<Budget[]>([]);
+export const BudgetManagement: React.FC<BudgetManagementProps> = ({ projectId }) => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
   const [newBudgetCategory, setNewBudgetCategory] = useState('');
-  const [newBudgetAmount, setNewBudgetAmount] = useState<number>(0);
+  const [newBudgetAmount, setNewBudgetAmount] = useState('');
 
-  useEffect(() => {
-    const fetchBudgets = async () => {
-      try {
-        const budgets = await getBudgets(projectId);
-        setBudgets(budgets);
-      } catch (error) {
-        console.error("Failed to fetch budgets", error);
-      }
-    };
-    fetchBudgets();
-  }, [projectId]);
+  const { data: budgets = [], isLoading: budgetsLoading } = useQuery<Budget[]>({
+    queryKey: ['budgets', projectId],
+    queryFn: () => BudgetService.getBudgetsForProject(projectId),
+  });
 
-  const handleAddBudget = async () => {
-    if (newBudgetCategory && newBudgetAmount > 0) {
-      try {
-        const newBudget = await addBudget({
-          project_id: projectId,
-          category: newBudgetCategory,
-          amount: newBudgetAmount,
-        });
-        setBudgets([...budgets, newBudget]);
-        setNewBudgetCategory('');
-        setNewBudgetAmount(0);
-      } catch (error) {
-        console.error("Failed to add budget", error);
-      }
+  const createBudgetMutation = useMutation({
+    mutationFn: (newBudget: Omit<Budget, 'id'>) => BudgetService.createBudget(newBudget),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['budgets', projectId] });
+      setNewBudgetCategory('');
+      setNewBudgetAmount('');
+      toast({ title: 'Budget category added' });
+    },
+    onError: () => {
+      toast({ title: 'Failed to add budget category', variant: 'destructive' });
+    },
+  });
+
+  const handleAddBudget = () => {
+    if (newBudgetCategory.trim() && newBudgetAmount) {
+      createBudgetMutation.mutate({
+        project_id: projectId,
+        category: newBudgetCategory.trim(),
+        amount: parseFloat(newBudgetAmount),
+      });
     }
   };
 
   return (
-    <div>
-      <h2>Budget Management</h2>
-      <ul>
-        {budgets.map(budget => (
-          <li key={budget.id}>
-            {budget.category}: ${budget.amount}
-          </li>
-        ))}
-      </ul>
-      <input
-        type="text"
-        value={newBudgetCategory}
-        onChange={(e) => setNewBudgetCategory(e.target.value)}
-        placeholder="Category"
-      />
-      <input
-        type="number"
-        value={newBudgetAmount}
-        onChange={(e) => setNewBudgetAmount(Number(e.target.value))}
-        placeholder="Amount"
-      />
-      <button onClick={handleAddBudget}>Add Budget</button>
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>Budgeting and Cost Tracking</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="flex gap-2 mb-4">
+          <Input
+            placeholder="New budget category"
+            value={newBudgetCategory}
+            onChange={(e) => setNewBudgetCategory(e.target.value)}
+          />
+          <Input
+            type="number"
+            placeholder="Amount"
+            value={newBudgetAmount}
+            onChange={(e) => setNewBudgetAmount(e.target.value)}
+          />
+          <Button onClick={handleAddBudget} disabled={createBudgetMutation.isPending}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Budget
+          </Button>
+        </div>
+        {budgetsLoading ? (
+          <p>Loading budgets...</p>
+        ) : (
+          <div className="space-y-2">
+            {budgets.map((budget) => (
+              <div key={budget.id} className="flex items-center justify-between p-2 border rounded-lg">
+                <span>{budget.category}</span>
+                <span>${budget.amount.toLocaleString()}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };
-
-export default BudgetManagement;
