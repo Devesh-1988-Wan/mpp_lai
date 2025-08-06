@@ -1,7 +1,21 @@
+-- supabase/migrations/20250808125000_add_resource_management.sql
+
+-- 0. Create helper function to check project membership
+CREATE OR REPLACE FUNCTION check_user_is_member(p_project_id UUID)
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1
+    FROM project_users
+    WHERE project_id = p_project_id AND user_id = auth.uid()
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- 1. Create the resources table
 CREATE TABLE resources (
     id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    project_id BIGINT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
     type TEXT, -- e.g., 'Human', 'Equipment', 'Material'
     availability JSONB, -- Can store details like hours/week, specific dates
@@ -12,7 +26,7 @@ CREATE TABLE resources (
 -- 2. Create the resource_allocations table
 CREATE TABLE resource_allocations (
     id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    task_id BIGINT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+    task_id UUID NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
     resource_id BIGINT NOT NULL REFERENCES resources(id) ON DELETE CASCADE,
     allocated_hours NUMERIC,
     created_at TIMESTAMPTZ DEFAULT NOW(),
