@@ -1,7 +1,21 @@
-- 1. Create the budgets table
+-- supabase/migrations/20250808125100_add_budgeting.sql
+
+-- 0. Create helper function to check project membership
+CREATE OR REPLACE FUNCTION check_user_is_member(p_project_id UUID)
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1
+    FROM project_users
+    WHERE project_id = p_project_id AND user_id = auth.uid()
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 1. Create the budgets table
 CREATE TABLE budgets (
     id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    project_id BIGINT NOT NULL REFERENCES projects(id) ON DELETE CASCADE UNIQUE, -- One budget per project
+    project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE UNIQUE, -- One budget per project
     total_budget NUMERIC NOT NULL CHECK (total_budget >= 0),
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
