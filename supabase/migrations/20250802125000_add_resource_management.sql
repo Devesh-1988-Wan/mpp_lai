@@ -1,49 +1,45 @@
--- supabase/migrations/20250802125000_add_resource_management.sql
-
-CREATE TABLE public.resources (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  project_id UUID REFERENCES public.projects(id) ON DELETE CASCADE NOT NULL,
-  name TEXT NOT NULL,
-  type TEXT CHECK (type IN ('human', 'equipment', 'material')) NOT NULL,
-  availability NUMERIC(5,2) DEFAULT 100.00,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+-- 1. Create the resources table
+CREATE TABLE resources (
+    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    project_id BIGINT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    type TEXT, -- e.g., 'Human', 'Equipment', 'Material'
+    availability JSONB, -- Can store details like hours/week, specific dates
+    cost_per_hour NUMERIC,
+    created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE TABLE public.task_resources (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  task_id UUID REFERENCES public.tasks(id) ON DELETE CASCADE NOT NULL,
-  resource_id UUID REFERENCES public.resources(id) ON DELETE CASCADE NOT NULL,
-  assigned_at TIMESTAMPTZ DEFAULT NOW(),
-  UNIQUE (task_id, resource_id)
+-- 2. Create the resource_allocations table
+CREATE TABLE resource_allocations (
+    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    task_id BIGINT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+    resource_id BIGINT NOT NULL REFERENCES resources(id) ON DELETE CASCADE,
+    allocated_hours NUMERIC,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(task_id, resource_id) -- Ensures a resource is allocated only once per task
 );
 
-ALTER TABLE public.resources ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.task_resources ENABLE ROW LEVEL SECURITY;
+-- 3. Add Row Level Security (RLS) policies
+-- Enable RLS for the new tables
+ALTER TABLE resources ENABLE ROW LEVEL SECURITY;
+ALTER TABLE resource_allocations ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users can manage resources for accessible projects"
-ON public.resources
-FOR ALL
-TO authenticated
-USING (
-  EXISTS (
-    SELECT 1 FROM public.projects
-    WHERE projects.id = resources.project_id
-  )
-);
+-- Allow project members to view resources for their projects
+CREATE POLICY "Allow members to view resources"
+ON resources FOR SELECT
+USING ( check_user_is_member(project_id) );
 
-CREATE POLICY "Users can manage task resources for accessible projects"
-ON public.task_resources
-FOR ALL
-TO authenticated
-USING (
-  EXISTS (
-    SELECT 1 FROM public.tasks
-    JOIN public.projects ON tasks.project_id = projects.id
-    WHERE tasks.id = task_resources.task_id
-  )
-);
+-- Allow project members to manage resources for their projects
+CREATE POLICY "Allow members to manage resources"
+ON resources FOR ALL
+USING ( check_user_is_member(project_id) );
 
-CREATE TRIGGER update_resources_updated_at
-  BEFORE UPDATE ON public.resources
-  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+-- Allow project members to view resource allocations for their projects
+CREATE POLICY "Allow members to view resource allocations"
+ON resource_allocations FOR SELECT
+USING ( check_user_is_member((SELECT project_id FROM tasks WHERE id = task_id)) );
+
+-- Allow project members to manage resource allocations for their projects
+CREATE POLICY "Allow members to manage resource allocations"
+ON resource_allocations FOR ALL
+USING ( check_user_is_member((SELECT project_id FROM tasks WHERE id = task_id)) );
