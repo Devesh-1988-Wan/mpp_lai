@@ -7,29 +7,43 @@ export function exportToCSV(tasks: Task[], projectName: string = 'Project') {
     'Task Name',
     'Type',
     'Status',
+    'Priority',
     'Start Date',
     'End Date',
     'Duration (days)',
     'Assignee',
+    'Developer',
+    'Estimated Days',
+    'Estimated Hours',
     'Progress (%)',
     'Dependencies',
-    'Description'
+    'Description',
+    'Work Item Link',
+    'Docs Progress'
   ];
 
   const csvData = tasks.map(task => {
-    const duration = Math.ceil((task.endDate.getTime() - task.startDate.getTime()) / (1000 * 60 * 60 * 24));
+    const startDate = new Date(task.start_date);
+    const endDate = new Date(task.end_date);
+    const duration = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
     
     return [
       task.name,
-      task.type,
+      task.task_type,
       task.status,
-      format(task.startDate, 'yyyy-MM-dd'),
-      format(task.endDate, 'yyyy-MM-dd'),
+      task.priority,
+      format(startDate, 'yyyy-MM-dd'),
+      format(endDate, 'yyyy-MM-dd'),
       duration.toString(),
       task.assignee || '',
+      task.developer || '',
+      task.estimated_days?.toString() || '',
+      task.estimated_hours?.toString() || '',
       task.progress.toString(),
       task.dependencies.join('; '),
-      task.description
+      task.description || '',
+      task.work_item_link || '',
+      task.docs_progress || ''
     ];
   });
 
@@ -58,31 +72,45 @@ export function exportToExcel(tasks: Task[], projectName: string = 'Project') {
     'ID',
     'Task Name',
     'Type',
-    'Status', 
+    'Status',
+    'Priority',
     'Start Date',
     'End Date',
     'Duration (days)',
     'Assignee',
+    'Developer',
+    'Estimated Days',
+    'Estimated Hours',
     'Progress (%)',
     'Dependencies',
-    'Description'
+    'Description',
+    'Work Item Link',
+    'Docs Progress'
   ];
 
   const excelData = tasks.map(task => {
-    const duration = Math.ceil((task.endDate.getTime() - task.startDate.getTime()) / (1000 * 60 * 60 * 24));
+    const startDate = new Date(task.start_date);
+    const endDate = new Date(task.end_date);
+    const duration = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
     
     return [
       task.id,
       task.name,
-      task.type.charAt(0).toUpperCase() + task.type.slice(1),
+      task.task_type.charAt(0).toUpperCase() + task.task_type.slice(1),
       task.status.charAt(0).toUpperCase() + task.status.slice(1).replace('-', ' '),
-      format(task.startDate, 'MM/dd/yyyy'),
-      format(task.endDate, 'MM/dd/yyyy'),
+      task.priority,
+      format(startDate, 'MM/dd/yyyy'),
+      format(endDate, 'MM/dd/yyyy'),
       duration,
       task.assignee || 'Unassigned',
+      task.developer || 'Unassigned',
+      task.estimated_days || 0,
+      task.estimated_hours || 0,
       task.progress,
       task.dependencies.length > 0 ? task.dependencies.join(', ') : 'None',
-      task.description || 'No description'
+      task.description || 'No description',
+      task.work_item_link || 'None',
+      task.docs_progress || 'Not Started'
     ];
   });
 
@@ -122,8 +150,8 @@ export function generateProjectSummary(tasks: Task[]): string {
   const totalTasks = tasks.length;
   const completedTasks = tasks.filter(task => task.status === 'completed').length;
   const inProgressTasks = tasks.filter(task => task.status === 'in-progress').length;
-  const milestones = tasks.filter(task => task.type === 'milestone').length;
-  const deliverables = tasks.filter(task => task.type === 'deliverable').length;
+  const milestones = tasks.filter(task => task.task_type === 'milestone').length;
+  const deliverables = tasks.filter(task => task.task_type === 'deliverable').length;
 
   return `Project Summary:
 - Total Tasks: ${totalTasks}
