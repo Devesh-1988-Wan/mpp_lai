@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getBudgets, addBudget } from '../services/budgetService';
-import { Budget } from '../types';
+import { Budget } from '../types/project'; // Corrected import path
 
 interface Props {
   projectId: string;
@@ -13,22 +13,30 @@ const BudgetManagement: React.FC<Props> = ({ projectId }) => {
 
   useEffect(() => {
     const fetchBudgets = async () => {
-      const budgets = await getBudgets(projectId);
-      setBudgets(budgets);
+      try {
+        const budgets = await getBudgets(projectId);
+        setBudgets(budgets);
+      } catch (error) {
+        console.error("Failed to fetch budgets", error);
+      }
     };
     fetchBudgets();
   }, [projectId]);
 
   const handleAddBudget = async () => {
     if (newBudgetCategory && newBudgetAmount > 0) {
-      const newBudget = await addBudget({
-        project_id: projectId,
-        category: newBudgetCategory,
-        amount: newBudgetAmount,
-      });
-      setBudgets([...budgets, newBudget]);
-      setNewBudgetCategory('');
-      setNewBudgetAmount(0);
+      try {
+        const newBudget = await addBudget({
+          project_id: projectId,
+          category: newBudgetCategory,
+          amount: newBudgetAmount,
+        });
+        setBudgets([...budgets, newBudget]);
+        setNewBudgetCategory('');
+        setNewBudgetAmount(0);
+      } catch (error) {
+        console.error("Failed to add budget", error);
+      }
     }
   };
 
