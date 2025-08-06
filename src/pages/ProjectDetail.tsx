@@ -193,13 +193,11 @@ const ProjectDetail = () => {
           }}
           customFields={project.customFields}
         />
-        {/* Temporarily disabled components due to missing database tables in types */}
-        {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <ResourceManagement projectId={projectId!} />
           <BudgetManagement projectId={projectId!} />
         </div>
         <IntegrationManagement projectId={projectId!} />
-        */}
       </main>
       <footer className="bg-card border-t">
         <div className="container mx-auto px-6 py-4 text-center text-muted-foreground">
