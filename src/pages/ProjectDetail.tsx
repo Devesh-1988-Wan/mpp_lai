@@ -16,8 +16,7 @@ import { ResourceManagement } from "@/components/ResourceManagement";
 import { BudgetManagement } from "@/components/BudgetManagement";
 import { IntegrationManagement } from "@/components/IntegrationManagement";
 import { IntegrationService } from "@/services/integrationService";
-import { ImportData } from "@/components/ImportData";
-import { exportToCSV, downloadFile } from "@/utils/exportUtils"; // Import the utility functions
+import { ImportData } from "@/components/ImportData"; // Import the ImportData component
 
 const ProjectDetail = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -28,7 +27,7 @@ const ProjectDetail = () => {
 
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>();
-  const [showImportDialog, setShowImportDialog] = useState(false);
+  const [showImportDialog, setShowImportDialog] = useState(false); // State for import dialog
 
   const { data: project, isLoading: projectLoading } = useQuery({
     queryKey: ['project', projectId],
@@ -47,16 +46,6 @@ const ProjectDetail = () => {
     queryFn: () => IntegrationService.getIntegration(projectId!),
     enabled: !!projectId,
   });
-  
-  const handleExport = () => {
-    if (tasks && tasks.length > 0) {
-      const csvData = exportToCSV(tasks);
-      downloadFile(csvData, `${project?.name || 'project'}-tasks.csv`, 'text/csv;charset=utf-8;');
-      toast({ title: "Export Successful", description: "Your tasks have been exported to CSV." });
-    } else {
-      toast({ title: "No Data to Export", description: "There are no tasks to export.", variant: "destructive" });
-    }
-  };
 
   const createTaskMutation = useMutation({
     mutationFn: TaskService.createTask,
@@ -100,6 +89,7 @@ const ProjectDetail = () => {
     },
   });
 
+  // Handler for importing tasks
   const handleImportTasks = async (importedTasks: Omit<Task, 'id' | 'created_at' | 'updated_at'>[]) => {
     for (const task of importedTasks) {
       createTaskMutation.mutate({ ...task, project_id: projectId! });
@@ -156,7 +146,7 @@ const ProjectDetail = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background">
       <div className="border-b bg-card">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
           <Button onClick={() => navigate('/projects')} variant="outline">
@@ -171,10 +161,12 @@ const ProjectDetail = () => {
         totalTasks={projectStats.total}
         completedTasks={projectStats.completed}
         onAddTask={() => setShowTaskForm(true)}
-        onExport={handleExport} // Updated
-        onImport={() => setShowImportDialog(true)}
+        onExport={() => {
+          // Implement export functionality here
+        }}
+        onImport={() => setShowImportDialog(true)} // Pass the handler to open the dialog
       />
-      <main className="flex-grow container mx-auto p-6 space-y-6">
+      <div className="container mx-auto p-6 space-y-6">
         {showTaskForm && (
           <TaskForm
             onSave={handleSaveTask}
@@ -184,6 +176,7 @@ const ProjectDetail = () => {
             customFields={project.customFields}
           />
         )}
+        {/* Add the ImportData component */}
         {showImportDialog && (
             <ImportData
                 onImport={handleImportTasks}
@@ -195,20 +188,19 @@ const ProjectDetail = () => {
           tasks={tasks || []}
           onEditTask={(task) => { setEditingTask(task); setShowTaskForm(true); }}
           onDeleteTask={(taskId) => deleteTaskMutation.mutate(taskId)}
-          onExportReport={handleExport} // Updated
+          onExportReport={() => {
+            // Implement export functionality here
+          }}
           customFields={project.customFields}
         />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Temporarily disabled components due to missing database tables in types */}
+        {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <ResourceManagement projectId={projectId!} />
           <BudgetManagement projectId={projectId!} />
         </div>
         <IntegrationManagement projectId={projectId!} />
-      </main>
-      <footer className="bg-card border-t">
-        <div className="container mx-auto px-6 py-4 text-center text-muted-foreground">
-          <p>Designed by Amla Commerce</p>
-        </div>
-      </footer>
+        */}
+      </div>
     </div>
   );
 };

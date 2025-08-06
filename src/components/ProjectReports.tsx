@@ -64,20 +64,7 @@ export function ProjectReports({ tasks, onExportReport }: ProjectReportsProps) {
       if (!task.assignee) return acc;
 
       if (!acc[task.assignee]) {
-        acc[task.assignee] = { 
-          total: 0, 
-          completed: 0, 
-          inProgress: 0, 
-          totalEstimatedDays: 0, 
-          totalEstimatedHours: 0, 
-          tasksByPriority: {
-            'Blocker': 0,
-            'Critical': 0,
-            'High': 0,
-            'Medium': 0,
-            'Low': 0
-          } as Record<TaskPriority, number>
-        };
+        acc[task.assignee] = { total: 0, completed: 0, inProgress: 0, totalEstimatedDays: 0, totalEstimatedHours: 0, tasksByPriority: {} };
       }
 
       acc[task.assignee].total++;
