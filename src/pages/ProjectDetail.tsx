@@ -12,7 +12,7 @@ import { TaskService } from "@/services/taskService";
 
 // Components
 import { TaskForm } from "@/components/TaskForm";
-import { ProjectHeader } from "@/components/ProjectHeader";
+import ProjectHeader from "@/components/ProjectHeader"; // Corrected import
 import { DashboardTabs } from "@/components/DashboardTabs";
 import { ImportData } from "@/components/ImportData";
 
