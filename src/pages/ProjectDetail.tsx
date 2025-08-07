@@ -1,18 +1,24 @@
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react"; // Removed useEffect, added useMemo
 import { useParams } from "react-router-dom";
-import { Project } from "@/types/project";
-import { ProjectService } from "@/services/projectService";
-import { TaskService } from "@/services/taskService";
-import { Task } from "@/types/project";
-import GanttChart from "@/components/GanttChart";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
+
+// Types
+import { Task } from "@/types/project";
+
+// Services
+import { ProjectService } from "@/services/projectService";
+import { TaskService } from "@/services/taskService";
+
+// Components
 import { TaskForm } from "@/components/TaskForm";
 import { ProjectHeader } from "@/components/ProjectHeader";
 import { DashboardTabs } from "@/components/DashboardTabs";
+import { ImportData } from "@/components/ImportData";
+
+// Utils & Hooks
 import { exportToExcel } from "@/utils/exportUtils";
 import { useToast } from "@/hooks/use-toast";
-import {ImportData} from "@/components/ImportData";
 
 const ProjectDetail = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -23,30 +29,43 @@ const ProjectDetail = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
+  // Early return if projectId is not present in the URL.
+  // This ensures projectId is a string in all subsequent code, removing the need for `!`.
+  if (!projectId) {
+    return <div className="p-4">Error: Project ID is missing.</div>;
+  }
+
   const { data: project, isLoading: isProjectLoading } = useQuery({
-    queryKey: ['project', projectId],
-    queryFn: () => ProjectService.getProjectById(projectId!),
-    enabled: !!projectId,
+    queryKey: ["project", projectId],
+    queryFn: () => ProjectService.getProjectById(projectId),
   });
 
   const { data: tasks = [], isLoading: areTasksLoading } = useQuery({
-    queryKey: ['tasks', projectId],
-    queryFn: () => TaskService.getTasksForProject(projectId!),
-    enabled: !!projectId,
+    queryKey: ["tasks", projectId],
+    queryFn: () => TaskService.getTasksForProject(projectId),
   });
+  
+  // Memoize the completed tasks calculation to avoid re-calculating on every render.
+  const completedTasks = useMemo(() => {
+    return tasks.filter((t) => t.status === "completed").length;
+  }, [tasks]);
 
-  const handleSaveTask = async (taskData: Omit<Task, 'id'>) => {
+  const handleCloseTaskForm = () => {
+    setShowTaskForm(false);
+    setEditingTask(undefined);
+  };
+
+  const handleSaveTask = async (taskData: Omit<Task, "id">) => {
     try {
       if (editingTask) {
         await TaskService.updateTask(editingTask.id, taskData);
         toast({ title: "Task updated successfully." });
       } else {
-        await TaskService.createTask({ ...taskData, project_id: projectId! });
+        await TaskService.createTask({ ...taskData, project_id: projectId });
         toast({ title: "Task created successfully." });
       }
-      queryClient.invalidateQueries({ queryKey: ['tasks', projectId] });
-      setShowTaskForm(false);
-      setEditingTask(undefined);
+      queryClient.invalidateQueries({ queryKey: ["tasks", projectId] });
+      handleCloseTaskForm();
     } catch (error) {
       console.error("Failed to save task:", error);
       toast({ title: "Failed to save task.", variant: "destructive" });
@@ -61,6 +80,7 @@ const ProjectDetail = () => {
   const handleExport = () => {
     if (project && tasks.length > 0) {
       exportToExcel(tasks, `project_${project.name}_tasks`);
+      toast({ title: "Tasks exported successfully." });
     } else {
       toast({ title: "No tasks to export.", variant: "destructive" });
     }
@@ -71,7 +91,8 @@ const ProjectDetail = () => {
   };
 
   const handleDataImported = () => {
-    queryClient.invalidateQueries({ queryKey: ['tasks', projectId] });
+    queryClient.invalidateQueries({ queryKey: ["tasks", projectId] });
+    toast({ title: "Data imported successfully!" });
     setShowImportDialog(false);
   };
 
@@ -84,7 +105,7 @@ const ProjectDetail = () => {
   }
 
   if (!project) {
-    return <div>Project not found.</div>;
+    return <div className="p-4">Project not found.</div>;
   }
 
   return (
@@ -92,16 +113,13 @@ const ProjectDetail = () => {
       {showTaskForm ? (
         <TaskForm
           onSave={handleSaveTask}
-          onCancel={() => {
-            setShowTaskForm(false);
-            setEditingTask(undefined);
-          }}
+          onCancel={handleCloseTaskForm}
           editTask={editingTask}
-          projectId={projectId!}
+          projectId={projectId}
         />
       ) : showImportDialog ? (
-        <ImportData 
-          projectId={projectId!} 
+        <ImportData
+          projectId={projectId}
           onClose={() => setShowImportDialog(false)}
           onDataImported={handleDataImported}
         />
@@ -110,14 +128,14 @@ const ProjectDetail = () => {
           <ProjectHeader
             projectName={project.name}
             totalTasks={tasks.length}
-            completedTasks={tasks.filter((t) => t.status === "completed").length}
+            completedTasks={completedTasks}
             onAddTask={() => setShowTaskForm(true)}
             onExport={handleExport}
             onImport={handleImport}
           />
-          <DashboardTabs 
-            project={project} 
-            tasks={tasks} 
+          <DashboardTabs
+            project={project}
+            tasks={tasks}
             onEditTask={handleEditTask}
           />
         </>
