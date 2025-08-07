@@ -57,7 +57,7 @@ export function GanttChart({ tasks, onEditTask, onDeleteTask }: GanttChartProps)
 
   const getStatusColor = (status: TaskStatus) => {
     switch (status) {
-      case 'completed': return 'bg-[#007BFF]';
+      case 'completed': return 'bg-[#7ED321]';
       case 'in-progress': return 'bg-[#4A90E2]';
       case 'on-hold': return 'bg-[#F5A623]';
       case 'not-started': return 'bg-[#B0B0B0]';
@@ -114,7 +114,7 @@ export function GanttChart({ tasks, onEditTask, onDeleteTask }: GanttChartProps)
         {/* Header with dates */}
         <div className="flex border-b bg-timeline-bg min-w-max">
           <div className="w-80 p-3 border-r bg-card font-medium">
-            Task Details
+            Work Item
           </div>
           <div className="flex-1 flex">
             {dayColumns.map((day, index) => (
@@ -142,7 +142,7 @@ export function GanttChart({ tasks, onEditTask, onDeleteTask }: GanttChartProps)
                       style={{ backgroundColor: getDocsProgressColor(task.docs_progress) }}
                     />
                     <span className="text-sm">{getTypeIcon(task.task_type)}</span>
-                    <span className="font-medium truncate">{task.name}</span>
+                    <span className="font-medium truncate">{task.work_item_link || task.name}</span>
                     {task.work_item_link && (
                       <a href={task.work_item_link} target="_blank" rel="noopener noreferrer">
                         <Link className="h-4 w-4 text-blue-500" />
