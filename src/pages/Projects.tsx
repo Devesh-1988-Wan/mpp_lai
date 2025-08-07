@@ -134,7 +134,7 @@ const Projects = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="border-b bg-card">
+      <div className="border-b bg-header-background text-header-foreground">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold">{profile?.display_name ? `${profile.display_name}'s Projects` : 'My Projects'}</h2>
           <UserMenu />
@@ -162,7 +162,7 @@ const Projects = () => {
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Back to Home
                 </Button>
-                <Button onClick={() => setShowProjectForm(true)}>
+                <Button variant="primary" onClick={() => setShowProjectForm(true)}>
                   <Plus className="w-4 h-4 mr-2" />
                   New Project
                 </Button>
