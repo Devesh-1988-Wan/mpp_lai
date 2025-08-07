@@ -38,7 +38,7 @@ export class ProjectService {
   }
 
   // Get a specific project by ID with embedded custom fields
-  static async getProject(id: string) {
+  static async getProjectById(id: string) {
     const { data, error } = await supabase
       .from('projects')
       .select('*, custom_fields(*)')
