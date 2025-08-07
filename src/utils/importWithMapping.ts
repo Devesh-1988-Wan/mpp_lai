@@ -1,4 +1,4 @@
-import { Task, TaskStatus, TaskType, CustomField, FieldType } from "@/types/project";
+import { Task, TaskStatus, TaskType, TaskPriority, CustomField, FieldType } from "@/types/project";
 
 interface FieldMapping {
   csvColumn: string;
@@ -110,6 +110,7 @@ export function importFromCSVWithMapping(
         name,
         task_type: type,
         status,
+        priority: (getValue('priority') as TaskPriority) || 'Medium',
         start_date: startDate.toISOString().split('T')[0], // Convert to YYYY-MM-DD format
         end_date: endDate.toISOString().split('T')[0],
         assignee: getValue('assignee'),
