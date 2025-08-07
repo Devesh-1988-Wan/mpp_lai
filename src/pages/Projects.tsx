@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { UserMenu } from "@/components/auth/UserMenu";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { ProfileService } from "@/services/profileService";
 
 // Helper function to safely format dates
 const formatDate = (dateString: string | null | undefined): string => {
@@ -37,6 +38,12 @@ const Projects = () => {
   const { data: projects = [], isLoading, isError, error } = useQuery({
     queryKey: ['projects'],
     queryFn: ProjectService.getUserProjects,
+  });
+
+  const { data: profile } = useQuery({
+    queryKey: ['userProfile', user?.id],
+    queryFn: ProfileService.getCurrentUserProfile,
+    enabled: !!user,
   });
 
   const createProjectMutation = useMutation({
@@ -129,7 +136,7 @@ const Projects = () => {
     <div className="min-h-screen bg-background">
       <div className="border-b bg-card">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">My Projects</h2>
+          <h2 className="text-lg font-semibold">{profile?.display_name ? `${profile.display_name}'s Projects` : 'My Projects'}</h2>
           <UserMenu />
         </div>
       </div>
