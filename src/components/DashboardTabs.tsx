@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card } from "@/components/ui/card";
 import { Task, CustomField } from "@/types/project";
 import { GanttChart } from "./GanttChart";
 import { ProjectReports } from "./ProjectReports";
 import { TaskFilters } from "./TaskFilters";
-import { BarChart3, Calendar, Filter, FileText } from "lucide-react";
+import { PriorityList } from "./PriorityList";
+import { BarChart3, Calendar, Filter, FileText, ListOrdered } from "lucide-react";
 
 interface DashboardTabsProps {
   tasks: Task[];
@@ -25,7 +25,7 @@ export function DashboardTabs({ tasks, onEditTask, onDeleteTask, onExportReport,
 
   return (
     <Tabs defaultValue="timeline" className="space-y-6">
-      <TabsList className="grid w-full grid-cols-3 lg:grid-cols-3">
+      <TabsList className="grid w-full grid-cols-4 lg:grid-cols-4">
         <TabsTrigger value="timeline" className="flex items-center space-x-2">
           <Calendar className="w-4 h-4" />
           <span>Timeline</span>
@@ -37,6 +37,10 @@ export function DashboardTabs({ tasks, onEditTask, onDeleteTask, onExportReport,
         <TabsTrigger value="filters" className="flex items-center space-x-2">
           <Filter className="w-4 h-4" />
           <span>Filters</span>
+        </TabsTrigger>
+        <TabsTrigger value="priority" className="flex items-center space-x-2">
+          <ListOrdered className="w-4 h-4" />
+          <span>Priority List</span>
         </TabsTrigger>
       </TabsList>
 
@@ -65,6 +69,9 @@ export function DashboardTabs({ tasks, onEditTask, onDeleteTask, onExportReport,
           onEditTask={onEditTask}
           onDeleteTask={onDeleteTask}
         />
+      </TabsContent>
+      <TabsContent value="priority" className="space-y-6">
+        <PriorityList tasks={tasks} />
       </TabsContent>
     </Tabs>
   );
