@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react"; // Removed useEffect, added useMemo
+import { useState, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
@@ -44,7 +44,7 @@ const ProjectDetail = () => {
     queryKey: ["tasks", projectId],
     queryFn: () => TaskService.getProjectTasks(projectId),
   });
-  
+
   // Memoize the completed tasks calculation to avoid re-calculating on every render.
   const completedTasks = useMemo(() => {
     return tasks.filter((t) => t.status === "completed").length;
@@ -75,6 +75,17 @@ const ProjectDetail = () => {
   const handleEditTask = (task: Task) => {
     setEditingTask(task);
     setShowTaskForm(true);
+  };
+
+  const handleDeleteTask = async (taskId: string) => {
+    try {
+      await TaskService.deleteTask(taskId);
+      toast({ title: "Task deleted successfully." });
+      queryClient.invalidateQueries({ queryKey: ["tasks", projectId] });
+    } catch (error) {
+      console.error("Failed to delete task:", error);
+      toast({ title: "Failed to delete task.", variant: "destructive" });
+    }
   };
 
   const handleExport = () => {
@@ -116,6 +127,8 @@ const ProjectDetail = () => {
           onCancel={handleCloseTaskForm}
           editTask={editingTask}
           projectId={projectId}
+          existingTasks={tasks}
+          customFields={project.customFields}
         />
       ) : showImportDialog ? (
         <ImportData
@@ -137,6 +150,9 @@ const ProjectDetail = () => {
             project={project}
             tasks={tasks}
             onEditTask={handleEditTask}
+            onDeleteTask={handleDeleteTask}
+            onExportReport={handleExport}
+            customFields={project.customFields}
           />
         </>
       )}
