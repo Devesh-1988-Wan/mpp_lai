@@ -4,7 +4,7 @@ import { ProjectService } from "@/services/projectService";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, FolderOpen, Calendar, Users, Archive, Loader2 } from "lucide-react";
+import { Plus, FolderOpen, Calendar, Users, Archive, Loader2, ArrowLeft } from "lucide-react";
 import { format, isValid } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { ProjectForm } from "@/components/ProjectForm";
@@ -150,10 +150,16 @@ const Projects = () => {
                   A list of all your projects
                 </p>
               </div>
-              <Button onClick={() => setShowProjectForm(true)}>
-                <Plus className="w-4 h-4 mr-2" />
-                New Project
-              </Button>
+              <div className="flex space-x-2">
+                <Button variant="outline" onClick={() => navigate('/')}>
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back to Home
+                </Button>
+                <Button onClick={() => setShowProjectForm(true)}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  New Project
+                </Button>
+              </div>
             </div>
 
             {isLoading && (
