@@ -57,7 +57,7 @@ export function GanttChart({ tasks, onEditTask, onDeleteTask }: GanttChartProps)
 
   const getStatusColor = (status: TaskStatus) => {
     switch (status) {
-      case 'completed': return 'bg-[#7ED321]';
+      case 'completed': return 'bg-[#007BFF]';
       case 'in-progress': return 'bg-[#4A90E2]';
       case 'on-hold': return 'bg-[#F5A623]';
       case 'not-started': return 'bg-[#B0B0B0]';
