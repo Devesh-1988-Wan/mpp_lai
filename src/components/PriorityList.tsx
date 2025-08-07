@@ -16,7 +16,7 @@ const allColumns = [
   { id: 'priority', name: 'Priority' },
   { id: 'assignee', name: 'Assignee' },
   { id: 'start_date', name: 'Start Date' },
-  { id: 'end_date', name 'End Date' },
+  { id: 'end_date', name: 'End Date' },
 ];
 
 export function PriorityList({ tasks }: PriorityListProps) {
