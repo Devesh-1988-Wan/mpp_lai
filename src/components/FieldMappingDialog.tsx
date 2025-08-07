@@ -24,18 +24,12 @@ const APP_FIELDS = [
   { value: 'name', label: 'Task Name', required: true },
   { value: 'task_type', label: 'Type', required: false },
   { value: 'status', label: 'Status', required: false },
-  { value: 'priority', label: 'Priority', required: false },
   { value: 'start_date', label: 'Start Date', required: true },
   { value: 'end_date', label: 'End Date', required: true },
   { value: 'assignee', label: 'Assignee', required: false },
-  { value: 'developer', label: 'Developer', required: false },
-  { value: 'estimated_days', label: 'Estimated Days', required: false },
-  { value: 'estimated_hours', label: 'Estimated Hours', required: false },
   { value: 'progress', label: 'Progress (%)', required: false },
   { value: 'dependencies', label: 'Dependencies', required: false },
   { value: 'description', label: 'Description', required: false },
-  { value: 'work_item_link', label: 'Work Item Link', required: false },
-  { value: 'docs_progress', label: 'Docs Progress', required: false },
 ];
 
 const findBestMatch = (headers: string[], fieldName: string): string | null => {
@@ -45,18 +39,12 @@ const findBestMatch = (headers: string[], fieldName: string): string | null => {
     name: ['task name', 'name', 'title'],
     task_type: ['type', 'task type'],
     status: ['status', 'task status'],
-    priority: ['priority', 'task priority', 'importance'],
     start_date: ['start date', 'start', 'start_date'],
     end_date: ['end date', 'end', 'end_date', 'due date'],
     assignee: ['assignee', 'assigned to', 'owner'],
-    developer: ['developer', 'dev', 'engineer', 'programmer'],
-    estimated_days: ['estimated days', 'est days', 'days', 'estimated_days'],
-    estimated_hours: ['estimated hours', 'est hours', 'hours', 'estimated_hours'],
     progress: ['progress', 'progress (%)', 'completion'],
     dependencies: ['dependencies', 'depends on'],
-    description: ['description', 'notes', 'details'],
-    work_item_link: ['work item link', 'link', 'url', 'work_item_link', 'ticket'],
-    docs_progress: ['docs progress', 'documentation', 'docs_progress', 'doc status']
+    description: ['description', 'notes', 'details']
   };
 
   const patterns = matchPatterns[fieldName] || [];

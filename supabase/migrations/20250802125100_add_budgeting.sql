@@ -1,58 +1,54 @@
--- supabase/migrations/20250808125100_add_budgeting.sql
+-- supabase/migrations/20250802125100_add_budgeting.sql
 
--- 0. Create helper function to check project membership
-CREATE OR REPLACE FUNCTION check_user_is_member(p_project_id UUID)
-RETURNS BOOLEAN AS $$
-BEGIN
-  RETURN EXISTS (
-    SELECT 1
-    FROM project_users
-    WHERE project_id = p_project_id AND user_id = auth.uid()
-  );
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- 1. Create the budgets table
-CREATE TABLE budgets (
-    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE UNIQUE, -- One budget per project
-    total_budget NUMERIC NOT NULL CHECK (total_budget >= 0),
-    created_at TIMESTAMPTZ DEFAULT NOW()
+CREATE TABLE public.budgets (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  project_id UUID REFERENCES public.projects(id) ON DELETE CASCADE NOT NULL,
+  category TEXT NOT NULL,
+  amount NUMERIC(10, 2) NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 2. Create the budget_items table for individual transactions
-CREATE TABLE budget_items (
-    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    budget_id BIGINT NOT NULL REFERENCES budgets(id) ON DELETE CASCADE,
-    description TEXT NOT NULL,
-    amount NUMERIC NOT NULL,
-    type TEXT NOT NULL, -- 'income' or 'expense'
-    category TEXT, -- e.g., 'Labor', 'Materials', 'Software'
-    transaction_date TIMESTAMPTZ DEFAULT NOW(),
-    created_at TIMESTAMPTZ DEFAULT NOW()
+CREATE TABLE public.expenses (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  project_id UUID REFERENCES public.projects(id) ON DELETE CASCADE NOT NULL,
+  budget_id UUID REFERENCES public.budgets(id) ON DELETE CASCADE NOT NULL,
+  description TEXT,
+  amount NUMERIC(10, 2) NOT NULL,
+  incurred_on DATE NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 3. Add Row Level Security (RLS) policies
--- Enable RLS for the new tables
-ALTER TABLE budgets ENABLE ROW LEVEL SECURITY;
-ALTER TABLE budget_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.budgets ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.expenses ENABLE ROW LEVEL SECURITY;
 
--- Allow project members to view budgets for their projects
-CREATE POLICY "Allow members to view budgets"
-ON budgets FOR SELECT
-USING ( check_user_is_member(project_id) );
+CREATE POLICY "Users can manage budgets for accessible projects"
+ON public.budgets
+FOR ALL
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 FROM public.projects
+    WHERE projects.id = budgets.project_id
+  )
+);
 
--- Allow project members to manage budgets for their projects
-CREATE POLICY "Allow members to manage budgets"
-ON budgets FOR ALL
-USING ( check_user_is_member(project_id) );
+CREATE POLICY "Users can manage expenses for accessible projects"
+ON public.expenses
+FOR ALL
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 FROM public.projects
+    WHERE projects.id = expenses.project_id
+  )
+);
 
--- Allow project members to view budget items for their projects
-CREATE POLICY "Allow members to view budget items"
-ON budget_items FOR SELECT
-USING ( check_user_is_member((SELECT project_id FROM budgets WHERE id = budget_id)) );
+CREATE TRIGGER update_budgets_updated_at
+  BEFORE UPDATE ON public.budgets
+  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
--- Allow project members to manage budget items for their projects
-CREATE POLICY "Allow members to manage budget items"
-ON budget_items FOR ALL
-USING ( check_user_is_member((SELECT project_id FROM budgets WHERE id = budget_id)) );
+CREATE TRIGGER update_expenses_updated_at
+  BEFORE UPDATE ON public.expenses
+  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();

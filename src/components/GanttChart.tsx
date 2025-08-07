@@ -69,7 +69,6 @@ export function GanttChart({ tasks, onEditTask, onDeleteTask }: GanttChartProps)
     switch (type) {
       case 'milestone': return '◆';
       case 'deliverable': return '📦';
-      case 'task': return '⭐';
       default: return '■';
     }
   };
@@ -139,9 +138,8 @@ export function GanttChart({ tasks, onEditTask, onDeleteTask }: GanttChartProps)
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center space-x-2">
                     <span
-                      className="h-3 w-3 rounded-full border"
+                      className="h-3 w-3 rounded-full"
                       style={{ backgroundColor: getDocsProgressColor(task.docs_progress) }}
-                      title={task.docs_progress} // Optional: shows status on hover
                     />
                     <span className="text-sm">{getTypeIcon(task.task_type)}</span>
                     <span className="font-medium truncate">{task.name}</span>

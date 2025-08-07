@@ -1,4 +1,4 @@
-import { Task, TaskStatus, TaskType, TaskPriority, CustomField, FieldType, DocsProgressStatus } from "@/types/project";
+import { Task, TaskStatus, TaskType, TaskPriority, CustomField, FieldType } from "@/types/project";
 
 interface FieldMapping {
   csvColumn: string;
@@ -106,34 +106,17 @@ export function importFromCSVWithMapping(
         }
       });
 
-      // Parse estimated values
-      const estimatedDays = getValue('estimated_days');
-      const estimatedHours = getValue('estimated_hours');
-
-      // Parse docs progress
-      const docsProgressValue = getValue('docs_progress');
-      const docsProgress: DocsProgressStatus = [
-        'Not Started', 'In Analysis-TA', 'In Progress', 'Ready or Test Cases', 'Handover', 'Not Applicable'
-      ].includes(docsProgressValue) 
-        ? docsProgressValue as DocsProgressStatus 
-        : 'Not Started';
-
       const task: Omit<Task, 'id' | 'created_at' | 'updated_at'> = {
         name,
         task_type: type,
         status,
-        priority: getValue('priority') as TaskPriority || 'Medium',
-        developer: getValue('developer') || undefined,
-        estimated_days: estimatedDays ? parseFloat(estimatedDays) : undefined,
-        estimated_hours: estimatedHours ? parseFloat(estimatedHours) : undefined,
+        priority: (getValue('priority') as TaskPriority) || 'Medium',
         start_date: startDate.toISOString().split('T')[0], // Convert to YYYY-MM-DD format
         end_date: endDate.toISOString().split('T')[0],
         assignee: getValue('assignee'),
         progress,
         dependencies,
         description: getValue('description'),
-        work_item_link: getValue('work_item_link') || undefined,
-        docs_progress: docsProgress,
         custom_fields: Object.keys(customFieldValues).length > 0 ? customFieldValues : undefined,
         project_id: '' // This will be set when the task is created
       };

@@ -5,11 +5,7 @@ import { Task, CustomField } from "@/types/project";
 import { GanttChart } from "./GanttChart";
 import { ProjectReports } from "./ProjectReports";
 import { TaskFilters } from "./TaskFilters";
-import { BarChart3, Calendar, Filter, FileText, MapPin, MessageSquare, Network, ExternalLink } from "lucide-react";
-import { Timeline } from "./Timeline";
-import { ProjectRoadmap } from "./ProjectRoadmap";
-import { NetworkDiagram } from "./NetworkDiagram";
-import { PivotTable } from "./PivotTable";
+import { BarChart3, Calendar, Filter, FileText } from "lucide-react";
 
 interface DashboardTabsProps {
   tasks: Task[];
@@ -29,7 +25,7 @@ export function DashboardTabs({ tasks, onEditTask, onDeleteTask, onExportReport,
 
   return (
     <Tabs defaultValue="timeline" className="space-y-6">
-      <TabsList className="grid w-full grid-cols-6 lg:grid-cols-6">
+      <TabsList className="grid w-full grid-cols-3 lg:grid-cols-3">
         <TabsTrigger value="timeline" className="flex items-center space-x-2">
           <Calendar className="w-4 h-4" />
           <span>Timeline</span>
@@ -41,18 +37,6 @@ export function DashboardTabs({ tasks, onEditTask, onDeleteTask, onExportReport,
         <TabsTrigger value="filters" className="flex items-center space-x-2">
           <Filter className="w-4 h-4" />
           <span>Filters</span>
-        </TabsTrigger>
-        <TabsTrigger value="roadmap" className="flex items-center space-x-2">
-          <MapPin className="w-4 h-4" />
-          <span>Roadmap</span>
-        </TabsTrigger>
-        <TabsTrigger value="network" className="flex items-center space-x-2">
-          <Network className="w-4 h-4" />
-          <span>Network</span>
-        </TabsTrigger>
-        <TabsTrigger value="pivot" className="flex items-center space-x-2">
-          <BarChart3 className="w-4 h-4" />
-          <span>Pivot</span>
         </TabsTrigger>
       </TabsList>
 
@@ -81,18 +65,6 @@ export function DashboardTabs({ tasks, onEditTask, onDeleteTask, onExportReport,
           onEditTask={onEditTask}
           onDeleteTask={onDeleteTask}
         />
-      </TabsContent>
-
-      <TabsContent value="roadmap" className="space-y-6">
-        <ProjectRoadmap tasks={tasks} />
-      </TabsContent>
-
-      <TabsContent value="network" className="space-y-6">
-        <NetworkDiagram tasks={tasks} onTaskClick={onEditTask} />
-      </TabsContent>
-
-      <TabsContent value="pivot" className="space-y-6">
-        <PivotTable tasks={tasks} />
       </TabsContent>
     </Tabs>
   );
