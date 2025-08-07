@@ -66,43 +66,78 @@ export type Database = {
           },
         ]
       }
-      budgets: {
+      budget_items: {
         Row: {
           amount: number
-          category: string
+          budget_id: number
+          category: string | null
           created_at: string | null
-          id: string
-          project_id: string
-          updated_at: string | null
+          description: string
+          id: number
+          transaction_date: string | null
+          type: string
         }
         Insert: {
           amount: number
-          category: string
+          budget_id: number
+          category?: string | null
           created_at?: string | null
-          id?: string
-          project_id: string
-          updated_at?: string | null
+          description: string
+          id?: never
+          transaction_date?: string | null
+          type: string
         }
         Update: {
           amount?: number
-          category?: string
+          budget_id?: number
+          category?: string | null
           created_at?: string | null
-          id?: string
+          description?: string
+          id?: never
+          transaction_date?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_items_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "budgets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budgets: {
+        Row: {
+          created_at: string | null
+          id: number
+          project_id: string
+          total_budget: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: never
+          project_id: string
+          total_budget: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: never
           project_id?: string
-          updated_at?: string | null
+          total_budget?: number
         }
         Relationships: [
           {
             foreignKeyName: "budgets_project_id_fkey"
             columns: ["project_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budgets_project_id_fkey"
             columns: ["project_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
@@ -188,13 +223,6 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "expenses_budget_id_fkey"
-            columns: ["budget_id"]
-            isOneToOne: false
-            referencedRelation: "budgets"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "expenses_project_id_fkey"
             columns: ["project_id"]
@@ -355,33 +383,72 @@ export type Database = {
         }
         Relationships: []
       }
-      resources: {
+      resource_allocations: {
         Row: {
-          availability: number | null
+          allocated_hours: number | null
           created_at: string | null
-          id: string
-          name: string
-          project_id: string
-          type: string
-          updated_at: string | null
+          id: number
+          resource_id: number
+          task_id: string
         }
         Insert: {
-          availability?: number | null
+          allocated_hours?: number | null
           created_at?: string | null
-          id?: string
-          name: string
-          project_id: string
-          type: string
-          updated_at?: string | null
+          id?: never
+          resource_id: number
+          task_id: string
         }
         Update: {
-          availability?: number | null
+          allocated_hours?: number | null
           created_at?: string | null
-          id?: string
+          id?: never
+          resource_id?: number
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resource_allocations_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "resources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resource_allocations_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      resources: {
+        Row: {
+          availability: Json | null
+          cost_per_hour: number | null
+          created_at: string | null
+          id: number
+          name: string
+          project_id: string
+          type: string | null
+        }
+        Insert: {
+          availability?: Json | null
+          cost_per_hour?: number | null
+          created_at?: string | null
+          id?: never
+          name: string
+          project_id: string
+          type?: string | null
+        }
+        Update: {
+          availability?: Json | null
+          cost_per_hour?: number | null
+          created_at?: string | null
+          id?: never
           name?: string
           project_id?: string
-          type?: string
-          updated_at?: string | null
+          type?: string | null
         }
         Relationships: [
           {
@@ -421,13 +488,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "task_resources_resource_id_fkey"
-            columns: ["resource_id"]
-            isOneToOne: false
-            referencedRelation: "resources"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "task_resources_task_id_fkey"
             columns: ["task_id"]
             isOneToOne: false
@@ -444,6 +504,9 @@ export type Database = {
           dependencies: Json | null
           description: string | null
           developer: string | null
+          docs_progress:
+            | Database["public"]["Enums"]["docs_progress_status"]
+            | null
           end_date: string
           estimated_days: number | null
           estimated_hours: number | null
@@ -456,7 +519,7 @@ export type Database = {
           status: string | null
           task_type: string | null
           updated_at: string | null
-          docs_progress: Database["public"]["Enums"]["docs_progress_status"] | null
+          work_item_link: string | null
         }
         Insert: {
           assignee?: string | null
@@ -465,6 +528,9 @@ export type Database = {
           dependencies?: Json | null
           description?: string | null
           developer?: string | null
+          docs_progress?:
+            | Database["public"]["Enums"]["docs_progress_status"]
+            | null
           end_date: string
           estimated_days?: number | null
           estimated_hours?: number | null
@@ -477,7 +543,7 @@ export type Database = {
           status?: string | null
           task_type?: string | null
           updated_at?: string | null
-          docs_progress?: Database["public"]["Enums"]["docs_progress_status"] | null
+          work_item_link?: string | null
         }
         Update: {
           assignee?: string | null
@@ -486,6 +552,9 @@ export type Database = {
           dependencies?: Json | null
           description?: string | null
           developer?: string | null
+          docs_progress?:
+            | Database["public"]["Enums"]["docs_progress_status"]
+            | null
           end_date?: string
           estimated_days?: number | null
           estimated_hours?: number | null
@@ -498,7 +567,7 @@ export type Database = {
           status?: string | null
           task_type?: string | null
           updated_at?: string | null
-          docs_progress?: Database["public"]["Enums"]["docs_progress_status"] | null
+          work_item_link?: string | null
         }
         Relationships: [
           {
@@ -586,6 +655,10 @@ export type Database = {
         Args: { project_id_to_check: string }
         Returns: boolean
       }
+      check_user_is_member: {
+        Args: { p_project_id: string }
+        Returns: boolean
+      }
       check_user_project_permission: {
         Args: { p_project_id: string }
         Returns: boolean
@@ -620,9 +693,15 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "moderator" | "user" | "Super" | "super_admin",
-      task_priority: "Blocker" | "Critical" | "High" | "Medium" | "Low",
-      docs_progress_status: "Not Started" | "In Analysis-TA" | "In Progress" | "Ready or Test Cases" | "Handover" | "Not Applicable"
+      app_role: "admin" | "moderator" | "user" | "Super" | "super_admin"
+      docs_progress_status:
+        | "Not Started"
+        | "In Analysis-TA"
+        | "In Progress"
+        | "Ready or Test Cases"
+        | "Handover"
+        | "Not Applicable"
+      task_priority: "Blocker" | "Critical" | "High" | "Medium" | "Low"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -751,6 +830,14 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user", "Super", "super_admin"],
+      docs_progress_status: [
+        "Not Started",
+        "In Analysis-TA",
+        "In Progress",
+        "Ready or Test Cases",
+        "Handover",
+        "Not Applicable",
+      ],
       task_priority: ["Blocker", "Critical", "High", "Medium", "Low"],
     },
   },
