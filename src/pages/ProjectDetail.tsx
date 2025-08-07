@@ -12,7 +12,7 @@ import { ProjectHeader } from "@/components/ProjectHeader";
 import { DashboardTabs } from "@/components/DashboardTabs";
 import { exportToExcel } from "@/utils/exportUtils";
 import { useToast } from "@/hooks/use-toast";
-import ImportData from "@/components/ImportData";
+import {ImportData} from "@/components/ImportData";
 
 const ProjectDetail = () => {
   const { projectId } = useParams<{ projectId: string }>();
