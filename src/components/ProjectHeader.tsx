@@ -33,6 +33,7 @@ const ProjectHeader = ({
             {/* * UPDATE: Added `aria-label` for accessibility.
               * This provides a descriptive text for screen readers on icon-only buttons.
             */}
+            <img src="/logo.svg" alt="Logo" className="h-8 w-8" />
             <Button variant="ghost" size="icon" onClick={() => navigate("/projects")} aria-label="Back to projects">
               <ArrowLeft className="w-5 h-5" />
             </Button>
