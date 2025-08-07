@@ -1,82 +1,29 @@
-import { Plus, Download, Settings, Calendar, Upload } from "lucide-react"; // Import Upload icon
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { ArrowLeft } from "lucide-react";
+import { UserMenu } from "@/components/auth/UserMenu";
+import { Project } from "@/types/project";
 
 interface ProjectHeaderProps {
-  projectName: string;
-  totalTasks: number;
-  completedTasks: number;
-  onAddTask: () => void;
-  onExport: () => void;
-  onImport: () => void; // Add onImport prop
+  project: Project;
 }
 
-export function ProjectHeader({
-  projectName,
-  totalTasks,
-  completedTasks,
-  onAddTask,
-  onExport,
-  onImport, // Destructure onImport
-}: ProjectHeaderProps) {
-  const completionPercentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+const ProjectHeader = ({ project }: ProjectHeaderProps) => {
+  const navigate = useNavigate();
 
   return (
-    <div className="bg-gradient-to-r from-primary to-professional p-6 shadow-lg">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <div>
-            <h1 className="text-2xl font-bold text-primary-foreground">{projectName}</h1>
-            <div className="flex items-center space-x-4 mt-2">
-              <Badge variant="secondary" className="bg-white/20 text-primary-foreground border-0">
-                <Calendar className="w-3 h-3 mr-1" />
-                {totalTasks} tasks
-              </Badge>
-              <Badge
-                variant={completionPercentage === 100 ? "default" : "secondary"}
-                className="bg-white/20 text-primary-foreground border-0"
-              >
-                {completionPercentage}% complete
-              </Badge>
-            </div>
-          </div>
+    <div className="bg-header-background text-header-foreground border-b">
+      <div className="container mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => navigate("/projects")}>
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <h1 className="text-xl font-semibold">{project.name}</h1>
         </div>
-
-        <div className="flex items-center space-x-2">
-          <Button
-            onClick={onAddTask}
-            variant="secondary"
-            className="bg-white/20 hover:bg-white/30 text-primary-foreground border-0"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Task
-          </Button>
-          {/* Add Import Button */}
-          <Button
-            onClick={onImport}
-            variant="secondary"
-            className="bg-white/20 hover:bg-white/30 text-primary-foreground border-0"
-          >
-            <Upload className="w-4 h-4 mr-2" />
-            Import
-          </Button>
-          <Button
-            onClick={onExport}
-            variant="secondary"
-            className="bg-white/20 hover:bg-white/30 text-primary-foreground border-0"
-          >
-            <Download className="w-4 h-4 mr-2" />
-            Export
-          </Button>
-          <Button
-            variant="secondary"
-            size="icon"
-            className="bg-white/20 hover:bg-white/30 text-primary-foreground border-0"
-          >
-            <Settings className="w-4 h-4" />
-          </Button>
-        </div>
+        <UserMenu />
       </div>
     </div>
   );
-}
+};
+
+export default ProjectHeader;
