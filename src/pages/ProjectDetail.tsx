@@ -12,7 +12,7 @@ import { TaskService } from "@/services/taskService";
 
 // Components
 import { TaskForm } from "@/components/TaskForm";
-import ProjectHeader from "@/components/ProjectHeader"; // Corrected import
+import ProjectHeader from "@/components/ProjectHeader";
 import { DashboardTabs } from "@/components/DashboardTabs";
 import { ImportData } from "@/components/ImportData";
 
@@ -42,7 +42,7 @@ const ProjectDetail = () => {
 
   const { data: tasks = [], isLoading: areTasksLoading } = useQuery({
     queryKey: ["tasks", projectId],
-    queryFn: () => TaskService.getTasksForProject(projectId),
+    queryFn: () => TaskService.getProjectTasks(projectId),
   });
   
   // Memoize the completed tasks calculation to avoid re-calculating on every render.
