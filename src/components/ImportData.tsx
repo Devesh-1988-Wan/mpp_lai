@@ -213,11 +213,11 @@ export function ImportData({
       }
     }).join(',');
     
-    const headers = `Task Name,Type,Status,Start Date,End Date,Assignee,Progress (%),Dependencies,Description${customFieldHeaders ? ',' + customFieldHeaders : ''}`;
+    const headers = `Task Name,Type,Status,Priority,Start Date,End Date,Assignee,Developer,Progress (%),Dependencies,Description,Estimated Hours,Estimated Days,Work Item Link,Priority Code,Docs Progress${customFieldHeaders ? ',' + customFieldHeaders : ''}`;
     const sampleRows = [
-      `"Setup Project Environment",task,not-started,2024-01-15,2024-01-17,"John Doe",0,"","Initialize development environment"${customFieldSample ? ',' + customFieldSample : ''}`,
-      `"Requirements Analysis",milestone,in-progress,2024-01-18,2024-01-25,"Jane Smith",50,"","Gather and analyze project requirements"${customFieldSample ? ',' + customFieldSample : ''}`,
-      `"Database Design",deliverable,not-started,2024-01-26,2024-02-02,"Mike Johnson",0,"Requirements Analysis","Design database schema"${customFieldSample ? ',' + customFieldSample : ''}`
+      `"Setup Project Environment",task,not-started,Medium,2024-01-15,2024-01-17,"John Doe","Dev1",0,"","Initialize development environment",16,2,"WI-123","P1","Not Started"${customFieldSample ? ',' + customFieldSample : ''}`,
+      `"Requirements Analysis",milestone,in-progress,High,2024-01-18,2024-01-25,"Jane Smith","Dev2",50,"","Gather and analyze project requirements",40,5,"WI-124","P2","In Progress"${customFieldSample ? ',' + customFieldSample : ''}`,
+      `"Database Design",deliverable,not-started,Critical,2024-01-26,2024-02-02,"Mike Johnson","Dev1",0,"Requirements Analysis","Design database schema",32,4,"WI-125","P1","In Analysis-TA"${customFieldSample ? ',' + customFieldSample : ''}`
     ];
     
     const template = [headers, ...sampleRows].join('\n');
