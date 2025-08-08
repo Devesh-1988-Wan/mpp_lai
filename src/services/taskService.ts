@@ -22,6 +22,7 @@ type Task = {
   created_at: string
   updated_at: string
   work_item_link?: string;
+  priority_code?: string;
   docs_progress?: 'Not Started' | 'In Analysis-TA' | 'In Progress' | 'Ready or Test Cases' | 'Handover' | 'Not Applicable';
 }
 
@@ -74,6 +75,7 @@ export class TaskService {
       dependencies: task.dependencies || [],
       custom_fields: task.custom_fields || {},
       work_item_link: task.work_item_link || null,
+      priority_code: task.priority_code || null,
       docs_progress: task.docs_progress || 'Not Started',
     };
 

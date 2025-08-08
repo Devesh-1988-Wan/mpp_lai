@@ -41,6 +41,7 @@ export interface Task {
   created_at: string;
   updated_at: string;
   work_item_link?: string;
+  priority_code?: string;
   docs_progress?: DocsProgressStatus;
 }
 

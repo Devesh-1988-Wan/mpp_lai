@@ -45,7 +45,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
   const [estimatedHours, setEstimatedHours] = useState<number | undefined>(editTask?.estimated_hours);
   const [estimatedDays, setEstimatedDays] = useState<number | undefined>(editTask?.estimated_days);
   const [workItemLink, setWorkItemLink] = useState(editTask?.work_item_link || '');
-  const [priorityCode, setPriorityCode] = useState('');
+  const [priorityCode, setPriorityCode] = useState(editTask?.priority_code || '');
   const [docsProgress, setDocsProgress] = useState<DocsProgressStatus>(editTask?.docs_progress || 'Not Started');
   const [dependencies, setDependencies] = useState<string[]>(editTask?.dependencies || []);
   const [customFieldValues, setCustomFieldValues] = useState<Record<string, any>>(
@@ -88,6 +88,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
       dependencies,
       custom_fields: customFieldValues,
       work_item_link: workItemLink.trim(),
+      priority_code: priorityCode.trim(),
       docs_progress: docsProgress,
     };
 
