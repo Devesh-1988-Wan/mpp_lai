@@ -14,6 +14,7 @@ const allColumns = [
   { id: 'name', name: 'Task Name' },
   { id: 'status', name: 'Status' },
   { id: 'priority', name: 'Priority' },
+  { id: 'priority_code', name: 'Priority Code' },
   { id: 'assignee', name: 'Assignee' },
   { id: 'start_date', name: 'Start Date' },
   { id: 'end_date', name: 'End Date' },
@@ -21,7 +22,7 @@ const allColumns = [
 ];
 
 export function PriorityList({ tasks }: PriorityListProps) {
-  const [visibleColumns, setVisibleColumns] = useState<string[]>(['name', 'status', 'priority', 'assignee']);
+  const [visibleColumns, setVisibleColumns] = useState<string[]>(['name', 'status', 'priority', 'priority_code', 'assignee']);
   const [filter, setFilter] = useState('');
   const [filterColumn, setFilterColumn] = useState('name');
 
