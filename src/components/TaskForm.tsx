@@ -45,6 +45,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
   const [estimatedHours, setEstimatedHours] = useState<number | undefined>(editTask?.estimated_hours);
   const [estimatedDays, setEstimatedDays] = useState<number | undefined>(editTask?.estimated_days);
   const [workItemLink, setWorkItemLink] = useState(editTask?.work_item_link || '');
+  const [priorityCode, setPriorityCode] = useState('');
   const [docsProgress, setDocsProgress] = useState<DocsProgressStatus>(editTask?.docs_progress || 'Not Started');
   const [dependencies, setDependencies] = useState<string[]>(editTask?.dependencies || []);
   const [customFieldValues, setCustomFieldValues] = useState<Record<string, any>>(
@@ -181,6 +182,10 @@ export const TaskForm: React.FC<TaskFormProps> = ({
             <div>
               <Label htmlFor="work_item_link">Work Item ID / Link</Label>
               <Input id="work_item_link" value={workItemLink} onChange={(e) => setWorkItemLink(e.target.value)} placeholder="Enter Work Item ID or a URL" />
+            </div>
+            <div>
+              <Label htmlFor="priority_code">Priority Code</Label>
+              <Input id="priority_code" value={priorityCode} onChange={(e) => setPriorityCode(e.target.value)} placeholder="Enter Priority Code" />
             </div>
             <div>
               <Label htmlFor="assignee">Assignee</Label>
