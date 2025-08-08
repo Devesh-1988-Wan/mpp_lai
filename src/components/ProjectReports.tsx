@@ -25,20 +25,20 @@ interface ProjectReportsProps {
   onExportReport: () => void;
 }
 
-const getPriorityBadgeStyle = (priority: TaskPriority) => {
-  switch (priority) {
-    case 'Critical':
-      return { backgroundColor: '#DC143C', color: 'white' };
-    case 'High':
-      return { backgroundColor: '#FF7F50', color: 'white' };
-    case 'Medium':
-      return { backgroundColor: '#FFD700', color: 'black' };
-    case 'Low':
-      return { backgroundColor: '#1E90FF', color: 'white' };
-    default:
-      return {};
-  }
-};
+const getPriorityBadgeStyle = (priority: TaskPriority): React.CSSProperties => {
+    switch (priority) {
+      case 'Critical':
+        return { backgroundColor: '#DC143C', color: 'white', borderColor: 'transparent' };
+      case 'High':
+        return { backgroundColor: '#FF7F50', color: 'white', borderColor: 'transparent' };
+      case 'Medium':
+        return { backgroundColor: '#FFD700', color: 'black', borderColor: 'transparent' };
+      case 'Low':
+        return { backgroundColor: '#1E90FF', color: 'white', borderColor: 'transparent' };
+      default:
+        return {};
+    }
+  };
 
 export function ProjectReports({ tasks, onExportReport }: ProjectReportsProps) {
   const analytics = useMemo(() => {
@@ -115,17 +115,17 @@ export function ProjectReports({ tasks, onExportReport }: ProjectReportsProps) {
 
     // Status distribution for charts
     const statusData = [
-      { name: 'Completed', value: completedTasks, color: '#0D47A1'},
-      { name: 'In Progress', value: inProgressTasks, color: '#28a745'},
-      { name: 'Not Started', value: notStartedTasks, color: '#FF6347'},
-      { name: 'On Hold', value: onHoldTasks, color: '#ff8800'}
+      { name: 'Completed', value: completedTasks, colorClass: 'bg-[#0D47A1]'},
+      { name: 'In Progress', value: inProgressTasks, colorClass: 'bg-[#28a745]'},
+      { name: 'Not Started', value: notStartedTasks, colorClass: 'bg-[#FF6347]'},
+      { name: 'On Hold', value: onHoldTasks, colorClass: 'bg-[#ff8800]'}
     ];
 
     // Type distribution
     const typeData = [
-      { name: 'Tasks', value: tasks.filter(t => t.task_type === 'task').length },
-      { name: 'Milestones', value: milestones.length },
-      { name: 'Deliverables', value: deliverables.length }
+      { name: 'Tasks', value: tasks.filter(t => t.task_type === 'task').length, colorClass: 'bg-[#4169E1]' },
+      { name: 'Milestones', value: milestones.length, colorClass: 'bg-[#673AB7]' },
+      { name: 'Deliverables', value: deliverables.length, colorClass: 'bg-[#008080]' }
     ];
 
     return {
@@ -181,11 +181,11 @@ export function ProjectReports({ tasks, onExportReport }: ProjectReportsProps) {
               <p className="text-sm font-medium text-muted-foreground">Project Completion</p>
               <p className="text-3xl font-bold" style={{ color: '#4169E1' }}>{analytics.completionRate}%</p>
             </div>
-            <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+            <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: '#4169E11A' }}>
               <TrendingUp className="w-6 h-6" style={{ color: '#4169E1' }} />
             </div>
           </div>
-          <Progress value={analytics.completionRate} className="mt-4" />
+          <Progress value={analytics.completionRate} className="mt-4" indicatorClassName="bg-[#4169E1]" />
           <p className="text-xs text-muted-foreground mt-2">
             {analytics.completedTasks} of {analytics.totalTasks} tasks completed
           </p>
@@ -197,11 +197,11 @@ export function ProjectReports({ tasks, onExportReport }: ProjectReportsProps) {
               <p className="text-sm font-medium text-muted-foreground">Milestones</p>
               <p className="text-3xl font-bold" style={{ color: '#673AB7' }}>{analytics.completedMilestones}/{analytics.milestones}</p>
             </div>
-            <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: '#673ab71a' }}>
+            <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: '#673AB71A' }}>
               <Target className="w-6 h-6" style={{ color: '#673AB7' }} />
             </div>
           </div>
-          <Progress value={analytics.milestoneCompletionRate} className="mt-4" />
+          <Progress value={analytics.milestoneCompletionRate} className="mt-4" indicatorClassName="bg-[#673AB7]" />
           <p className="text-xs text-muted-foreground mt-2">
             {analytics.milestoneCompletionRate}% milestone completion rate
           </p>
@@ -232,7 +232,7 @@ export function ProjectReports({ tasks, onExportReport }: ProjectReportsProps) {
               <p className="text-sm font-medium text-muted-foreground">Upcoming Tasks</p>
               <p className="text-3xl font-bold" style={{ color: '#001f3f' }}>{analytics.upcomingTasks.length}</p>
             </div>
-            <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: '#001f3f1a' }}>
+            <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: '#001f3f1A' }}>
               <Calendar className="w-6 h-6" style={{ color: '#001f3f' }} />
             </div>
           </div>
@@ -299,7 +299,7 @@ export function ProjectReports({ tasks, onExportReport }: ProjectReportsProps) {
                   <Progress
                     value={analytics.totalTasks > 0 ? (item.value / analytics.totalTasks) * 100 : 0}
                     className="flex-1"
-                    style={{'--progress-indicator-color': item.color} as React.CSSProperties}
+                    indicatorClassName={item.colorClass}
                   />
                   <span className="text-xs text-muted-foreground min-w-[40px]">
                     {analytics.totalTasks > 0 ? Math.round((item.value / analytics.totalTasks) * 100) : 0}%
@@ -310,7 +310,7 @@ export function ProjectReports({ tasks, onExportReport }: ProjectReportsProps) {
           </div>
         </Card>
 
-        {/* Task Types */}
+        {/* Task Types Breakdown */}
         <Card className="p-6">
           <h3 className="text-lg font-semibold mb-4">Task Types Breakdown</h3>
           <div className="space-y-4">
@@ -324,6 +324,7 @@ export function ProjectReports({ tasks, onExportReport }: ProjectReportsProps) {
                   <Progress
                     value={analytics.totalTasks > 0 ? (item.value / analytics.totalTasks) * 100 : 0}
                     className="flex-1"
+                    indicatorClassName={item.colorClass}
                   />
                   <span className="text-xs text-muted-foreground min-w-[40px]">
                     {analytics.totalTasks > 0 ? Math.round((item.value / analytics.totalTasks) * 100) : 0}%
@@ -434,8 +435,8 @@ export function ProjectReports({ tasks, onExportReport }: ProjectReportsProps) {
           )}
 
           {analytics.upcomingTasks.length > 0 && (
-            <Card className="p-6 border-warning/20 bg-warning/5">
-              <h3 className="text-lg font-semibold mb-4 text-warning flex items-center">
+            <Card className="p-6" style={{ borderColor: 'rgba(0, 31, 63, 0.2)', backgroundColor: 'rgba(0, 31, 63, 0.05)' }}>
+              <h3 className="text-lg font-semibold mb-4 flex items-center" style={{ color: '#001f3f' }}>
                 <Clock className="w-5 h-5 mr-2" />
                 Upcoming Tasks ({analytics.upcomingTasks.length})
               </h3>
