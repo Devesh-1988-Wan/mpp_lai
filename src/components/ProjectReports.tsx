@@ -100,10 +100,10 @@ export function ProjectReports({ tasks, onExportReport }: ProjectReportsProps) {
 
     // Status distribution for charts
     const statusData = [
-      { name: 'Completed', value: completedTasks, color: '#00C851'},
-      { name: 'In Progress', value: inProgressTasks, color: '	#008080'},
+      { name: 'Completed', value: completedTasks, color: '#007BFF'},
+      { name: 'In Progress', value: inProgressTasks, color: '#00C851'},
       { name: 'Not Started', value: notStartedTasks, color: '#708090'},
-      { name: 'On Hold', value: onHoldTasks, color: '#FFBF00'}
+      { name: 'On Hold', value: onHoldTasks, color: '#E69F00'}
     ];
 
     // Type distribution
