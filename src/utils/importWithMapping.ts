@@ -1,4 +1,4 @@
-import { Task, TaskStatus, TaskType, TaskPriority, CustomField, FieldType } from "@/types/project";
+import { Task, TaskStatus, TaskType, TaskPriority, CustomField, FieldType, DocsProgressStatus } from "@/types/project";
 
 interface FieldMapping {
   csvColumn: string;
@@ -75,6 +75,12 @@ export function importFromCSVWithMapping(
       const status: TaskStatus = ['not-started', 'in-progress', 'completed', 'on-hold'].includes(statusValue)
         ? statusValue as TaskStatus
         : 'not-started';
+        
+      // Parse docs progress with fallback
+      const docsProgressValue = getValue('docs_progress').trim() || 'Not Started';
+      const docsProgress: DocsProgressStatus = ['Not Started', 'In Analysis-TA', 'In Progress', 'Ready or Test Cases', 'Handover', 'Not Applicable'].includes(docsProgressValue)
+        ? docsProgressValue as DocsProgressStatus
+        : 'Not Started';
 
       // Parse progress
       let progress = 0;
@@ -85,6 +91,26 @@ export function importFromCSVWithMapping(
           progress = Math.max(0, Math.min(100, progressValue));
         }
       }
+      
+      // Parse estimated hours and days
+      let estimated_hours = undefined;
+      const estimatedHoursStr = getValue('estimated_hours');
+      if (estimatedHoursStr) {
+        const estimatedHoursValue = parseFloat(estimatedHoursStr);
+        if (!isNaN(estimatedHoursValue)) {
+            estimated_hours = estimatedHoursValue;
+        }
+      }
+      
+      let estimated_days = undefined;
+      const estimatedDaysStr = getValue('estimated_days');
+      if (estimatedDaysStr) {
+          const estimatedDaysValue = parseFloat(estimatedDaysStr);
+          if(!isNaN(estimatedDaysValue)) {
+              estimated_days = estimatedDaysValue;
+          }
+      }
+
 
       // Parse dependencies
       const dependencies: string[] = [];
@@ -114,11 +140,17 @@ export function importFromCSVWithMapping(
         start_date: startDate.toISOString().split('T')[0], // Convert to YYYY-MM-DD format
         end_date: endDate.toISOString().split('T')[0],
         assignee: getValue('assignee'),
+        developer: getValue('developer'),
         progress,
         dependencies,
         description: getValue('description'),
         custom_fields: Object.keys(customFieldValues).length > 0 ? customFieldValues : undefined,
-        project_id: '' // This will be set when the task is created
+        project_id: '', // This will be set when the task is created
+        estimated_hours,
+        estimated_days,
+        work_item_link: getValue('work_item_link'),
+        priority_code: getValue('priority_code'),
+        docs_progress: docsProgress
       };
 
       tasks.push(task);
