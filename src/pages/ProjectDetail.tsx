@@ -30,7 +30,6 @@ const ProjectDetail = () => {
   const { toast } = useToast();
 
   // Early return if projectId is not present in the URL.
-  // This ensures projectId is a string in all subsequent code, removing the need for `!`.
   if (!projectId) {
     return <div className="p-4">Error: Project ID is missing.</div>;
   }
@@ -45,7 +44,6 @@ const ProjectDetail = () => {
     queryFn: () => TaskService.getProjectTasks(projectId),
   });
 
-  // Memoize the completed tasks calculation to avoid re-calculating on every render.
   const completedTasks = useMemo(() => {
     return tasks.filter((t) => t.status === "completed").length;
   }, [tasks]);
@@ -55,7 +53,7 @@ const ProjectDetail = () => {
     setEditingTask(undefined);
   };
 
-  const handleSaveTask = async (taskData: Omit<Task, "id">) => {
+  const handleSaveTask = async (taskData: Omit<Task, "id" | "created_at" | "updated_at">) => {
     try {
       if (editingTask) {
         await TaskService.updateTask(editingTask.id, taskData);
@@ -101,9 +99,37 @@ const ProjectDetail = () => {
     setShowImportDialog(true);
   };
 
-  const handleDataImported = () => {
-    queryClient.invalidateQueries({ queryKey: ["tasks", projectId] });
-    toast({ title: "Data imported successfully!" });
+  const handleDataImported = async (importedTasks: Omit<Task, 'id' | 'created_at' | 'updated_at'>[]) => {
+    try {
+      for (const task of importedTasks) {
+        await TaskService.createTask({ ...task, project_id: projectId });
+      }
+      queryClient.invalidateQueries({ queryKey: ["tasks", projectId] });
+      toast({ title: "Data imported successfully!" });
+      setShowImportDialog(false);
+    } catch (error) {
+      console.error("Failed to import tasks:", error);
+      toast({ title: "Failed to import tasks.", variant: "destructive" });
+    }
+  };
+  
+  const handleBulkUpdate = async (tasksToUpdate: Omit<Task, 'id' | 'created_at' | 'updated_at'>[]) => {
+    console.log("Bulk update requested for:", tasksToUpdate);
+    // Placeholder for bulk update logic
+    toast({
+      title: "Bulk Update",
+      description: "Bulk update functionality is not yet implemented.",
+    });
+    setShowImportDialog(false);
+  };
+  
+  const handleBulkDelete = async (taskNames: string[]) => {
+    console.log("Bulk delete requested for:", taskNames);
+    // Placeholder for bulk delete logic
+    toast({
+      title: "Bulk Delete",
+      description: "Bulk delete functionality is not yet implemented.",
+    });
     setShowImportDialog(false);
   };
 
@@ -122,20 +148,26 @@ const ProjectDetail = () => {
   return (
     <div className="min-h-screen bg-background">
       {showTaskForm ? (
-        <TaskForm
-          onSave={handleSaveTask}
-          onCancel={handleCloseTaskForm}
-          editTask={editingTask}
-          projectId={projectId}
-          existingTasks={tasks}
-          customFields={project.customFields}
-        />
+        <div className="container mx-auto p-6">
+          <TaskForm
+            onSave={handleSaveTask}
+            onCancel={handleCloseTaskForm}
+            editTask={editingTask}
+            projectId={projectId}
+            existingTasks={tasks}
+            customFields={project.customFields}
+          />
+        </div>
       ) : showImportDialog ? (
-        <ImportData
-          projectId={projectId}
-          onClose={() => setShowImportDialog(false)}
-          onDataImported={handleDataImported}
-        />
+        <div className="container mx-auto p-6">
+            <ImportData
+              onImport={handleDataImported}
+              onBulkUpdate={handleBulkUpdate}
+              onBulkDelete={handleBulkDelete}
+              existingTasks={tasks}
+              customFields={project.customFields}
+            />
+        </div>
       ) : (
         <>
           <ProjectHeader
@@ -146,14 +178,15 @@ const ProjectDetail = () => {
             onExport={handleExport}
             onImport={handleImport}
           />
-          <DashboardTabs
-            project={project}
-            tasks={tasks}
-            onEditTask={handleEditTask}
-            onDeleteTask={handleDeleteTask}
-            onExportReport={handleExport}
-            customFields={project.customFields}
-          />
+          <div className="container mx-auto p-6">
+            <DashboardTabs
+              tasks={tasks}
+              onEditTask={handleEditTask}
+              onDeleteTask={handleDeleteTask}
+              onExportReport={handleExport}
+              customFields={project.customFields}
+            />
+          </div>
         </>
       )}
     </div>
