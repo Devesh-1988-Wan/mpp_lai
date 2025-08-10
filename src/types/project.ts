@@ -43,6 +43,10 @@ export interface Task {
   work_item_link?: string;
   priority_code?: string;
   docs_progress?: DocsProgressStatus;
+  delivery_date?: string;
+  release_version?: string;
+  num_resources?: number;
+  total_hours_available?: number;
 }
 
 export interface Project {
