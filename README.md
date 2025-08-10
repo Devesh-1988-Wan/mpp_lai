@@ -1,22 +1,22 @@
-# Welcome to your Lovable project
+# Welcome to your amla project
 
 ## Project info
 
-**URL**: https://lovable.dev/projects/40858d6c-fc16-4dc5-97af-6b0a4718f2dd
+**URL**: https://amla-zpp.vercel.app/
 
 ## How can I edit this code?
 
 There are several ways of editing your application.
 
-**Use Lovable**
+**Use amla**
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/40858d6c-fc16-4dc5-97af-6b0a4718f2dd) and start prompting.
+Simply visit the [Znode Project](https://amla-zpp.vercel.app/) and start planing.
 
-Changes made via Lovable will be committed automatically to this repo.
+Changes made via amla will be committed automatically to this repo.
 
 **Use your preferred IDE**
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in amla.
 
 The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
 
@@ -62,12 +62,5 @@ This project is built with:
 
 ## How can I deploy this project?
 
-Simply open [Lovable](https://lovable.dev/projects/40858d6c-fc16-4dc5-97af-6b0a4718f2dd) and click on Share -> Publish.
+Simply open [Znode](https://amla-zpp.vercel.app/) and click on Share -> Publish.
 
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
