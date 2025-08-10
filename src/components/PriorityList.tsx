@@ -42,7 +42,7 @@ const allColumns = [
     { id: 'total_hours_available', name: 'Total Hours Available' },
 ];
 
-function PriorityList({ tasks }: { tasks: Task[] }) {
+export function PriorityList({ tasks }: { tasks: Task[] }) {
     const [visibleColumns, setVisibleColumns] = useState<string[]>(['priority_code', 'name', 'status', 'priority', 'assignee', 'delivery_date', 'release_version']);
     const [filter, setFilter] = useState('');
     const [filterColumn, setFilterColumn] = useState('name');
