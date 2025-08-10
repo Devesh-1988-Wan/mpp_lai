@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon, Save, X } from "lucide-react";
-import { format } from "date-fns";
+import { format, addDays } from "date-fns";
 import { Task, TaskStatus, TaskType, CustomField, TaskPriority, DocsProgressStatus } from "@/types/project";
 import { cn } from "@/lib/utils";
 
@@ -51,6 +51,13 @@ export const TaskForm: React.FC<TaskFormProps> = ({
   const [customFieldValues, setCustomFieldValues] = useState<Record<string, any>>(
     editTask?.custom_fields || {}
   );
+  const [deliveryDate, setDeliveryDate] = useState<Date | undefined>(
+    editTask?.delivery_date ? new Date(editTask.delivery_date) : undefined
+  );
+  const [releaseVersion, setReleaseVersion] = useState(editTask?.release_version || '');
+  const [numResources, setNumResources] = useState<number | undefined>(editTask?.num_resources);
+  const [totalHoursAvailable, setTotalHoursAvailable] = useState<number | undefined>(editTask?.total_hours_available);
+
 
   // Auto-calculate estimated days when estimated hours change
   useEffect(() => {
@@ -60,13 +67,19 @@ export const TaskForm: React.FC<TaskFormProps> = ({
       setEstimatedDays(undefined);
     }
   }, [estimatedHours]);
+  
+  // Auto-calculate end date based on the new formula
+  useEffect(() => {
+    if (startDate && typeof totalHoursAvailable === 'number' && typeof numResources === 'number' && typeof estimatedDays === 'number' && estimatedDays > 0) {
+      const calculatedDays = (totalHoursAvailable * numResources) / estimatedDays;
+      setEndDate(addDays(startDate, Math.ceil(calculatedDays)));
+    }
+  }, [startDate, totalHoursAvailable, numResources, estimatedDays]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!name.trim() || !startDate || !endDate) {
-      // Using a more user-friendly modal/toast for alerts is recommended
-      // but sticking to alert for this example based on existing code.
       alert("Please fill in all required fields: Task Name, Start Date, and End Date.");
       return;
     }
@@ -90,6 +103,10 @@ export const TaskForm: React.FC<TaskFormProps> = ({
       work_item_link: workItemLink.trim(),
       priority_code: priorityCode.trim(),
       docs_progress: docsProgress,
+      delivery_date: deliveryDate ? deliveryDate.toISOString().split('T')[0] : undefined,
+      release_version: releaseVersion.trim(),
+      num_resources: numResources,
+      total_hours_available: totalHoursAvailable,
     };
 
     onSave(taskData);
@@ -196,6 +213,10 @@ export const TaskForm: React.FC<TaskFormProps> = ({
                 <Label htmlFor="developer">Developer</Label>
                 <Input id="developer" value={developer} onChange={(e) => setDeveloper(e.target.value)} placeholder="Enter developer name" />
             </div>
+            <div>
+                <Label htmlFor="release_version">Release Version</Label>
+                <Input id="release_version" value={releaseVersion} onChange={(e) => setReleaseVersion(e.target.value)} placeholder="e.g. v1.2.3" />
+            </div>
           </div>
 
           {/* Column 2 */}
@@ -252,6 +273,14 @@ export const TaskForm: React.FC<TaskFormProps> = ({
                     </SelectContent>
                 </Select>
             </div>
+            <div>
+                <Label htmlFor="num_resources">Number of Resources</Label>
+                <Input id="num_resources" type="number" value={numResources || ''} onChange={(e) => setNumResources(parseInt(e.target.value) || undefined)} placeholder="e.g. 2" />
+            </div>
+            <div>
+                <Label htmlFor="total_hours_available">Total Hours Available</Label>
+                <Input id="total_hours_available" type="number" step="0.1" value={totalHoursAvailable || ''} onChange={(e) => setTotalHoursAvailable(parseFloat(e.target.value) || undefined)} placeholder="e.g. 40" />
+            </div>
           </div>
 
           {/* Column 3 */}
@@ -279,6 +308,18 @@ export const TaskForm: React.FC<TaskFormProps> = ({
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={endDate} onSelect={setEndDate} initialFocus /></PopoverContent>
               </Popover>
+            </div>
+            <div>
+                <Label htmlFor="delivery_date">Delivery Date</Label>
+                <Popover>
+                    <PopoverTrigger asChild>
+                        <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !deliveryDate && "text-muted-foreground")}>
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {deliveryDate ? format(deliveryDate, "PPP") : "Pick delivery date"}
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={deliveryDate} onSelect={setDeliveryDate} initialFocus /></PopoverContent>
+                </Popover>
             </div>
             <div>
                 <Label htmlFor="estimated_hours">Estimated Hours</Label>
