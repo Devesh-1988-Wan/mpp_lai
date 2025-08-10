@@ -142,9 +142,9 @@ export function GanttChart({ tasks, onEditTask, onDeleteTask }: GanttChartProps)
                       style={{ backgroundColor: getDocsProgressColor(task.docs_progress) }}
                     />
                     <span className="text-sm">{getTypeIcon(task.task_type)}</span>
-                    <span className="font-medium truncate">{task.work_item_link || task.priority}</span>
+                    <span className="font-medium truncate">{task.name}</span>
                     {task.work_item_link && (
-                      <a href={task.work_item_link} target="_blank" rel="noopener noreferrer">
+                      <a href={task.work_item_link} target="_blank" rel="noopener noreferrer" title={task.work_item_link}>
                         <Link className="h-4 w-4 text-blue-500" />
                       </a>
                     )}
