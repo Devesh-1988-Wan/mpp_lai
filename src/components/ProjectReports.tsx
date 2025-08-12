@@ -47,6 +47,8 @@ export function ProjectReports({ tasks, onExportReport }: ProjectReportsProps) {
         const inProgressTasks = tasks.filter(t => t.status === 'in-progress').length;
         const notStartedTasks = tasks.filter(t => t.status === 'not-started').length;
         const onHoldTasks = tasks.filter(t => t.status === 'on-hold').length;
+        const impactedTasks = tasks.filter(t => t.status === 'impacted').length;
+        const contingencyTasks = tasks.filter(t => t.status === 'contingency').length;
 
         const milestones = tasks.filter(t => t.task_type === 'milestone');
         const completedMilestones = milestones.filter(t => t.status === 'completed').length;
@@ -122,7 +124,9 @@ export function ProjectReports({ tasks, onExportReport }: ProjectReportsProps) {
             { name: 'Completed', value: completedTasks, colorClass: 'bg-[#0D47A1]' },
             { name: 'In Progress', value: inProgressTasks, colorClass: 'bg-[#28a745]' },
             { name: 'Not Started', value: notStartedTasks, colorClass: 'bg-[#FF6347]' },
-            { name: 'On Hold', value: onHoldTasks, colorClass: 'bg-[#ff8800]' }
+            { name: 'On Hold', value: onHoldTasks, colorClass: 'bg-[#ff8800]' },
+            { name: 'Impacted', value: impactedTasks, colorClass: 'bg-[#FFA500]' },
+            { name: 'Contingency', value: contingencyTasks, colorClass: 'bg-[#800080]' }
         ];
 
         // Type distribution
