@@ -31,7 +31,9 @@ export const TaskForm: React.FC<TaskFormProps> = ({
   const [name, setName] = useState(editTask?.name || '');
   const [description, setDescription] = useState(editTask?.description || '');
   const [taskType, setTaskType] = useState<TaskType>(editTask?.task_type || 'task');
-  const [status, setStatus] = useState<TaskStatus>(editTask?.status || 'not-started');
+  const validStatuses: TaskStatus[] = ['not-started', 'in-progress', 'completed', 'on-hold', 'impacted', 'contingency'];
+  const [status, setStatus] = useState<TaskStatus>(
+  editTask?.status && validStatuses.includes(editTask.status) ? editTask.status : 'not-started');
   const [startDate, setStartDate] = useState<Date | undefined>(
     editTask?.start_date ? new Date(editTask.start_date) : undefined
   );
