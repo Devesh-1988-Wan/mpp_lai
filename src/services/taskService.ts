@@ -8,7 +8,7 @@ type Task = {
   name: string
   description?: string
   task_type: 'task' | 'milestone' | 'deliverable'
-  status: 'not-started' | 'in-progress' | 'completed' | 'on-hold'
+  status: 'not-started' | 'in-progress' | 'completed' | 'on-hold' | 'impacted' | 'contingency'
   priority: TaskPriority;
   developer?: string;
   estimated_days?: number;
@@ -44,7 +44,7 @@ export class TaskService {
     return data?.map(task => ({
       ...task,
       task_type: task.task_type as 'task' | 'milestone' | 'deliverable',
-      status: task.status as 'not-started' | 'in-progress' | 'completed' | 'on-hold',
+      status: task.status as 'not-started' | 'in-progress' | 'completed' | 'on-hold' | 'impacted' | 'contingency',
       priority: task.priority as TaskPriority,
       dependencies: Array.isArray(task.dependencies) ? 
         (task.dependencies as any[]).map(dep => String(dep)) : 
@@ -94,7 +94,7 @@ export class TaskService {
     return {
       ...data,
       task_type: data.task_type as 'task' | 'milestone' | 'deliverable',
-      status: data.status as 'not-started' | 'in-progress' | 'completed' | 'on-hold',
+      status: data.status as 'not-started' | 'in-progress' | 'completed' | 'on-hold' | 'impacted' | 'contingency',
       priority: data.priority as TaskPriority,
       dependencies: Array.isArray(data.dependencies) ? 
         (data.dependencies as any[]).map(dep => String(dep)) : 
@@ -121,7 +121,7 @@ export class TaskService {
     return {
       ...data,
       task_type: data.task_type as 'task' | 'milestone' | 'deliverable',
-      status: data.status as 'not-started' | 'in-progress' | 'completed' | 'on-hold',
+      status: data.status as 'not-started' | 'in-progress' | 'completed' | 'on-hold' | 'impacted' | 'contingency',
       priority: data.priority as TaskPriority,
       dependencies: Array.isArray(data.dependencies) ? 
         (data.dependencies as any[]).map(dep => String(dep)) : 
