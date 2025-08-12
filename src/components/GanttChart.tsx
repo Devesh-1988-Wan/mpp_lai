@@ -61,6 +61,8 @@ export function GanttChart({ tasks, onEditTask, onDeleteTask }: GanttChartProps)
       case 'in-progress': return 'bg-[#00C851]';
       case 'on-hold': return 'bg-[#E69F00]';
       case 'not-started': return 'bg-[#708090]';
+      case 'impacted': return 'bg-[#FFA500]';
+      case 'contingency': return 'bg-[#800080]';
       default: return 'bg-muted';
     }
   };
