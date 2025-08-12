@@ -31,7 +31,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
   const [name, setName] = useState(editTask?.name || '');
   const [description, setDescription] = useState(editTask?.description || '');
   const [taskType, setTaskType] = useState<TaskType>(editTask?.task_type || 'task');
-  const validStatuses: TaskStatus[] = ['not-started', 'in-progress', 'completed', 'on-hold', 'impacted', 'contingency'];
+  const validStatuses: TaskStatus[] = ['not-started', 'in-progress', 'completed', 'on-hold'];
   const [status, setStatus] = useState<TaskStatus>(
   editTask?.status && validStatuses.includes(editTask.status) ? editTask.status : 'not-started');
   const [startDate, setStartDate] = useState<Date | undefined>(
@@ -231,6 +231,8 @@ export const TaskForm: React.FC<TaskFormProps> = ({
                   <SelectItem value="task">Task</SelectItem>
                   <SelectItem value="milestone">Milestone</SelectItem>
                   <SelectItem value="deliverable">Deliverable</SelectItem>
+                  <SelectItem value="impacted">Impacted</SelectItem>
+                  <SelectItem value="contingency">Contingency</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -243,8 +245,6 @@ export const TaskForm: React.FC<TaskFormProps> = ({
                   <SelectItem value="in-progress">In Progress</SelectItem>
                   <SelectItem value="completed">Completed</SelectItem>
                   <SelectItem value="on-hold">On Hold</SelectItem>
-                  <SelectItem value="impacted">Impacted</SelectItem>
-                  <SelectItem value="contingency">Contingency</SelectItem>
                 </SelectContent>
               </Select>
             </div>

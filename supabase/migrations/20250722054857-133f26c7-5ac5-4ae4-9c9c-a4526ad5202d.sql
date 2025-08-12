@@ -59,64 +59,64 @@ ALTER TABLE public.activity_log ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for projects
 DROP POLICY IF EXISTS "Users can view projects they created or are team members of" ON public.projects;
-CREATE POLICY "Users can view projects they created or are team members of" 
-ON public.projects 
-FOR SELECT 
-TO authenticated 
+CREATE POLICY "Users can view projects they created or are team members of"
+ON public.projects
+FOR SELECT
+TO authenticated
 USING (
-  created_by = auth.uid() OR 
+  created_by = auth.uid() OR
   auth.uid()::text = ANY(SELECT jsonb_array_elements_text(team_members))
 );
 
 DROP POLICY IF EXISTS "Users can create their own projects" ON public.projects;
-CREATE POLICY "Users can create their own projects" 
-ON public.projects 
-FOR INSERT 
-TO authenticated 
+CREATE POLICY "Users can create their own projects"
+ON public.projects
+FOR INSERT
+TO authenticated
 WITH CHECK (created_by = auth.uid());
 
 DROP POLICY IF EXISTS "Project creators can update their projects" ON public.projects;
-CREATE POLICY "Project creators can update their projects" 
-ON public.projects 
-FOR UPDATE 
-TO authenticated 
+CREATE POLICY "Project creators can update their projects"
+ON public.projects
+FOR UPDATE
+TO authenticated
 USING (created_by = auth.uid());
 
 DROP POLICY IF EXISTS "Project creators can delete their projects" ON public.projects;
-CREATE POLICY "Project creators can delete their projects" 
-ON public.projects 
-FOR DELETE 
-TO authenticated 
+CREATE POLICY "Project creators can delete their projects"
+ON public.projects
+FOR DELETE
+TO authenticated
 USING (created_by = auth.uid());
 
 -- RLS Policies for tasks
 DROP POLICY IF EXISTS "Users can view tasks for accessible projects" ON public.tasks;
-CREATE POLICY "Users can view tasks for accessible projects" 
-ON public.tasks 
-FOR SELECT 
-TO authenticated 
+CREATE POLICY "Users can view tasks for accessible projects"
+ON public.tasks
+FOR SELECT
+TO authenticated
 USING (
   EXISTS (
-    SELECT 1 FROM public.projects 
-    WHERE projects.id = tasks.project_id 
+    SELECT 1 FROM public.projects
+    WHERE projects.id = tasks.project_id
     AND (
-      projects.created_by = auth.uid() OR 
+      projects.created_by = auth.uid() OR
       auth.uid()::text = ANY(SELECT jsonb_array_elements_text(projects.team_members))
     )
   )
 );
 
 DROP POLICY IF EXISTS "Users can manage tasks for accessible projects" ON public.tasks;
-CREATE POLICY "Users can manage tasks for accessible projects" 
-ON public.tasks 
-FOR ALL 
-TO authenticated 
+CREATE POLICY "Users can manage tasks for accessible projects"
+ON public.tasks
+FOR ALL
+TO authenticated
 USING (
   EXISTS (
-    SELECT 1 FROM public.projects 
-    WHERE projects.id = tasks.project_id 
+    SELECT 1 FROM public.projects
+    WHERE projects.id = tasks.project_id
     AND (
-      projects.created_by = auth.uid() OR 
+      projects.created_by = auth.uid() OR
       auth.uid()::text = ANY(SELECT jsonb_array_elements_text(projects.team_members))
     )
   )
@@ -124,32 +124,32 @@ USING (
 
 -- RLS Policies for custom_fields
 DROP POLICY IF EXISTS "Users can view custom fields for accessible projects" ON public.custom_fields;
-CREATE POLICY "Users can view custom fields for accessible projects" 
-ON public.custom_fields 
-FOR SELECT 
-TO authenticated 
+CREATE POLICY "Users can view custom fields for accessible projects"
+ON public.custom_fields
+FOR SELECT
+TO authenticated
 USING (
   EXISTS (
-    SELECT 1 FROM public.projects 
-    WHERE projects.id = custom_fields.project_id 
+    SELECT 1 FROM public.projects
+    WHERE projects.id = custom_fields.project_id
     AND (
-      projects.created_by = auth.uid() OR 
+      projects.created_by = auth.uid() OR
       auth.uid()::text = ANY(SELECT jsonb_array_elements_text(projects.team_members))
     )
   )
 );
 
 DROP POLICY IF EXISTS "Users can manage custom fields for accessible projects" ON public.custom_fields;
-CREATE POLICY "Users can manage custom fields for accessible projects" 
-ON public.custom_fields 
-FOR ALL 
-TO authenticated 
+CREATE POLICY "Users can manage custom fields for accessible projects"
+ON public.custom_fields
+FOR ALL
+TO authenticated
 USING (
   EXISTS (
-    SELECT 1 FROM public.projects 
-    WHERE projects.id = custom_fields.project_id 
+    SELECT 1 FROM public.projects
+    WHERE projects.id = custom_fields.project_id
     AND (
-      projects.created_by = auth.uid() OR 
+      projects.created_by = auth.uid() OR
       auth.uid()::text = ANY(SELECT jsonb_array_elements_text(projects.team_members))
     )
   )
@@ -157,33 +157,33 @@ USING (
 
 -- RLS Policies for activity_log
 DROP POLICY IF EXISTS "Users can view activity for accessible projects" ON public.activity_log;
-CREATE POLICY "Users can view activity for accessible projects" 
-ON public.activity_log 
-FOR SELECT 
-TO authenticated 
+CREATE POLICY "Users can view activity for accessible projects"
+ON public.activity_log
+FOR SELECT
+TO authenticated
 USING (
   EXISTS (
-    SELECT 1 FROM public.projects 
-    WHERE projects.id = activity_log.project_id 
+    SELECT 1 FROM public.projects
+    WHERE projects.id = activity_log.project_id
     AND (
-      projects.created_by = auth.uid() OR 
+      projects.created_by = auth.uid() OR
       auth.uid()::text = ANY(SELECT jsonb_array_elements_text(projects.team_members))
     )
   )
 );
 
 DROP POLICY IF EXISTS "Users can create activity logs for accessible projects" ON public.activity_log;
-CREATE POLICY "Users can create activity logs for accessible projects" 
-ON public.activity_log 
-FOR INSERT 
-TO authenticated 
+CREATE POLICY "Users can create activity logs for accessible projects"
+ON public.activity_log
+FOR INSERT
+TO authenticated
 WITH CHECK (
   user_id = auth.uid() AND
   EXISTS (
-    SELECT 1 FROM public.projects 
-    WHERE projects.id = activity_log.project_id 
+    SELECT 1 FROM public.projects
+    WHERE projects.id = activity_log.project_id
     AND (
-      projects.created_by = auth.uid() OR 
+      projects.created_by = auth.uid() OR
       auth.uid()::text = ANY(SELECT jsonb_array_elements_text(projects.team_members))
     )
   )

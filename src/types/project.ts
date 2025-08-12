@@ -1,5 +1,5 @@
-export type TaskType = 'task' | 'milestone' | 'deliverable';
-export type TaskStatus = 'not-started' | 'in-progress' | 'completed' | 'on-hold' | 'impacted' | 'contingency';
+export type TaskType = 'task' | 'milestone' | 'deliverable' | 'impacted' | 'contingency';
+export type TaskStatus = 'not-started' | 'in-progress' | 'completed' | 'on-hold';
 export type FieldType = 'text' | 'number' | 'date' | 'select' | 'boolean';
 export type TaskPriority = 'Blocker' | 'Critical' | 'High' | 'Medium' | 'Low';
 export type DocsProgressStatus =
