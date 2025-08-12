@@ -108,9 +108,34 @@ export class TaskService {
 
   // Update a task
   static async updateTask(id: string, updates: any) {
+    // Sanitize updates to ensure data types are correct
+    const sanitizedUpdates = {
+      name: updates.name || null,
+      description: updates.description || null,
+      task_type: updates.task_type || 'task',
+      status: updates.status || 'not-started',
+      priority: updates.priority || 'Medium',
+      developer: updates.developer || null,
+      estimated_days: updates.estimated_days !== undefined ? updates.estimated_days : null,
+      estimated_hours: updates.estimated_hours !== undefined ? updates.estimated_hours : null,
+      start_date: updates.start_date,
+      end_date: updates.end_date,
+      assignee: updates.assignee || null,
+      progress: updates.progress || 0,
+      dependencies: updates.dependencies || [],
+      custom_fields: updates.custom_fields || {},
+      work_item_link: updates.work_item_link || null,
+      priority_code: updates.priority_code || null,
+      docs_progress: updates.docs_progress || 'Not Started',
+      delivery_date: updates.delivery_date || null,
+      release_version: updates.release_version || null,
+      num_resources: updates.num_resources !== undefined ? updates.num_resources : null,
+      total_hours_available: updates.total_hours_available !== undefined ? updates.total_hours_available : null,
+    };
+
     const { data, error } = await supabase
       .from('tasks')
-      .update(updates)
+      .update(sanitizedUpdates)
       .eq('id', id)
       .select()
       .single()
