@@ -7,6 +7,7 @@ interface Task {
     priority_code: string;
     work_item_link: string;
     name: string;
+    task_type: 'Task' | 'Milestone' | 'Deliverable' | 'Impacted' | 'Contingency';
     status: 'Todo' | 'In Progress' | 'Done';
     priority: 'Low' | 'Medium' | 'High';
     assignee: string;
@@ -31,6 +32,7 @@ const allColumns = [
     { id: 'priority_code', name: 'Priority Code' },
     { id: 'work_item_link', name: 'Work Item Link' },
     { id: 'name', name: 'Task Name' },
+    { id: 'task_type', name: 'Task Type' },
     { id: 'status', name: 'Status' },
     { id: 'priority', name: 'Priority' },
     { id: 'assignee', name: 'Assignee' },
@@ -43,7 +45,7 @@ const allColumns = [
 ];
 
 export function PriorityList({ tasks }: { tasks: Task[] }) {
-    const [visibleColumns, setVisibleColumns] = useState<string[]>(['priority_code', 'name', 'status', 'priority', 'assignee', 'delivery_date', 'release_version']);
+    const [visibleColumns, setVisibleColumns] = useState<string[]>(['priority_code', 'name','task_type', 'status', 'priority', 'assignee', 'delivery_date', 'release_version']);
     const [filter, setFilter] = useState('');
     const [filterColumn, setFilterColumn] = useState('name');
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
