@@ -61,16 +61,19 @@ export function GanttChart({ tasks, onEditTask, onDeleteTask }: GanttChartProps)
       case 'in-progress': return 'bg-[#00C851]';
       case 'on-hold': return 'bg-[#E69F00]';
       case 'not-started': return 'bg-[#708090]';
+      case 'dev-in-progress': return 'bg-[#FFA500]';
+      case 'dev-completed': return 'bg-[#32CD32]';
       default: return 'bg-muted';
     }
   };
 
   const getTypeIcon = (type: TaskType) => {
     switch (type) {
-      case 'milestone': return '◆';
+      case 'milestone': return '⚡️';
       case 'deliverable': return '📦';
-      case 'impacted': return '⚡️'; 
-      case 'contingency': return '🚧';
+      case 'impacted': return '🚧'; 
+      case 'contingency': return '🚀';
+      case 'technical-debt': return '🐞';
       default: return '■';
     }
   };

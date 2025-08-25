@@ -31,7 +31,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
   const [name, setName] = useState(editTask?.name || '');
   const [description, setDescription] = useState(editTask?.description || '');
   const [taskType, setTaskType] = useState<TaskType>(editTask?.task_type || 'task');
-  const validStatuses: TaskStatus[] = ['not-started', 'in-progress', 'completed', 'on-hold'];
+  const validStatuses: TaskStatus[] = ['not-started', 'in-progress', 'completed', 'on-hold', 'dev-in-progress', 'dev-completed'];
   const [status, setStatus] = useState<TaskStatus>(
   editTask?.status && validStatuses.includes(editTask.status) ? editTask.status : 'not-started');
   const [startDate, setStartDate] = useState<Date | undefined>(
@@ -233,6 +233,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
                   <SelectItem value="deliverable">Deliverable</SelectItem>
                   <SelectItem value="impacted">Impacted</SelectItem>
                   <SelectItem value="contingency">Contingency</SelectItem>
+                  <SelectItem value="technical-debt">Technical Debt</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -243,6 +244,8 @@ export const TaskForm: React.FC<TaskFormProps> = ({
                 <SelectContent>
                   <SelectItem value="not-started">Not Started</SelectItem>
                   <SelectItem value="in-progress">In Progress</SelectItem>
+                  <SelectItem value="dev-in-progress">Dev In Progress</SelectItem>
+                  <SelectItem value="dev-completed">Dev Completed</SelectItem>
                   <SelectItem value="completed">Completed</SelectItem>
                   <SelectItem value="on-hold">On Hold</SelectItem>
                 </SelectContent>

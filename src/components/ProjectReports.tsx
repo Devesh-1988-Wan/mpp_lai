@@ -131,7 +131,8 @@ export function ProjectReports({ tasks, onExportReport }: ProjectReportsProps) {
             { name: 'Milestones', value: milestones.length, colorClass: 'bg-[#673AB7]' },
             { name: 'Deliverables', value: deliverables.length, colorClass: 'bg-[#008080]' },
             { name: 'Impacted', value: tasks.filter(t => t.task_type === 'impacted').length, colorClass: 'bg-[#FFA500]' },
-            { name: 'Contingency', value: tasks.filter(t => t.task_type === 'contingency').length, colorClass: 'bg-[#800080]' }
+            { name: 'Contingency', value: tasks.filter(t => t.task_type === 'contingency').length, colorClass: 'bg-[#800080]' },
+            { name: 'Technical Debt', value: tasks.filter(t => t.task_type === 'technical-debt').length, colorClass: 'bg-[#ED4337]' }
         ];
 
         return {

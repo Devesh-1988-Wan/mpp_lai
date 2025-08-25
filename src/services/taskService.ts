@@ -7,7 +7,7 @@ type Task = {
   project_id: string
   name: string
   description?: string
-  task_type: 'task' | 'milestone' | 'deliverable'
+  task_type: 'task' | 'milestone' | 'deliverable'  | 'impacted' | 'contingency' | 'technical-debt';
   status: 'not-started' | 'in-progress' | 'completed' | 'on-hold' | 'impacted' | 'contingency'
   priority: TaskPriority;
   developer?: string;
@@ -44,7 +44,7 @@ export class TaskService {
     return data?.map(task => ({
       ...task,
       task_type: task.task_type as 'task' | 'milestone' | 'deliverable',
-      status: task.status as 'not-started' | 'in-progress' | 'completed' | 'on-hold' | 'impacted' | 'contingency',
+      status: task.status as 'not-started' | 'in-progress' | 'completed' | 'on-hold' |'dev-completed' | 'dev-in-progress',
       priority: task.priority as TaskPriority,
       dependencies: Array.isArray(task.dependencies) ? 
         (task.dependencies as any[]).map(dep => String(dep)) : 
