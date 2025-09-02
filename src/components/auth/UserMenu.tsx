@@ -10,14 +10,14 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
-import { LogOut, User } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 
 export const UserMenu: React.FC = () => {
   const { user, signOut } = useAuth();
 
   if (!user) return null;
 
-  const userInitials = user.email?.charAt(0).toUpperCase() || 'U';
+  const userInitials = (user.email?.[0] || 'U').toUpperCase();
 
   return (
     <DropdownMenu>
