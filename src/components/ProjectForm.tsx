@@ -10,7 +10,7 @@ import { Save, X, Plus, Trash2 } from "lucide-react";
 import { Project } from "@/types/project";
 
 interface ProjectFormProps {
-  onSave: (project: Omit<Project, 'id' | 'created_date' | 'last_modified' | 'created_by'>) => void;
+  onSave: (project: Omit<Project, 'id' | 'created_date' | 'last_modified' | 'created_by' | 'tasks' | 'customFields'>) => void;
   onCancel: () => void;
   editProject?: Project;
 }
@@ -29,12 +29,10 @@ export function ProjectForm({ onSave, onCancel, editProject }: ProjectFormProps)
       return;
     }
 
-    const projectData: Omit<Project, 'id' | 'created_date' | 'last_modified' | 'created_by'> = {
+    const projectData: Omit<Project, 'id' | 'created_date' | 'last_modified' | 'created_by' | 'tasks' | 'customFields'> = {
       name: name.trim(),
       description: description.trim(),
       status,
-      tasks: editProject?.tasks || [],
-      customFields: editProject?.customFields || [],
       team_members: teamMembers.filter(member => member.trim().length > 0)
     };
 

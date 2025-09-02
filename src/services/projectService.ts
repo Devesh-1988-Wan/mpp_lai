@@ -1,19 +1,5 @@
 import { supabase } from '@/lib/supabase'
-
-// Define types manually until the auto-generated types are updated
-type Project = {
-  id: string
-  name: string
-  description?: string
-  status: 'active' | 'completed' | 'archived'
-  created_date: string
-  last_modified: string
-  created_by: string
-  team_members: string[]
-}
-
-type ProjectInsert = Omit<Project, 'id' | 'created_date' | 'last_modified' | 'created_by'>
-type ProjectUpdate = Partial<Omit<Project, 'id' | 'created_date' | 'created_by'>>
+import { Project } from "@/integrations/supabase/types";
 
 export class ProjectService {
   // Get all projects for the current user
@@ -63,7 +49,7 @@ export class ProjectService {
   }
 
   // Create a new project
-  static async createProject(project: ProjectInsert) {
+  static async createProject(project: Omit<Project, 'id' | 'created_date' | 'last_modified' | 'created_by'>) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error('User not authenticated')
 

@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 
 // Types
-import { Task } from "@/types/project";
+import { Task } from "@/integrations/supabase/types";
 
 // Services
 import { ProjectService } from "@/services/projectService";

@@ -10,14 +10,6 @@ export interface Task {
   priority?: 'High' | 'Medium' | 'Low';
 }
 
-export interface Project {
-  id: string;
-  name: string;
-  startDate: string;
-  endDate: string;
-  tasks: Task[];
-}
-
 export interface Resource {
     id: string;
     name: string;
