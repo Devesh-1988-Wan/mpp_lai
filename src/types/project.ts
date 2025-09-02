@@ -1,63 +1,62 @@
-export type TaskType = 'task' | 'milestone' | 'deliverable' | 'impacted' | 'contingency'| 'technical-debt';
-export type TaskStatus = 'not-started' | 'in-progress' | 'completed' | 'on-hold'|'dev-in-progress' | 'dev-completed';
-export type FieldType = 'text' | 'number' | 'date' | 'select' | 'boolean';
-export type TaskPriority = 'Blocker' | 'Critical' | 'High' | 'Medium' | 'Low';
-export type DocsProgressStatus =
-  | 'Not Started'
-  | 'In Analysis-TA'
-  | 'In Progress'
-  | 'Ready or Test Cases'
-  | 'Handover'
-  | 'Not Applicable';
-
-export interface CustomField {
-  id: string;
-  project_id: string;
-  name: string;
-  field_type: FieldType;
-  required: boolean;
-  options?: any;
-  default_value?: any;
-  created_at: string;
-}
-
 export interface Task {
   id: string;
-  project_id: string;
   name: string;
-  description?: string;
-  task_type: TaskType;
-  status: TaskStatus;
-  priority: TaskPriority;
-  developer?: string;
-  estimated_days?: number;
-  estimated_hours?: number;
-  start_date: string;
-  end_date: string;
-  dependencies: string[];
-  assignee?: string;
+  startDate: string;
+  endDate: string;
   progress: number;
-  custom_fields?: Record<string, any>;
-  created_at: string;
-  updated_at: string;
-  work_item_link?: string;
-  priority_code?: string;
-  docs_progress?: DocsProgressStatus;
-  delivery_date?: string;
-  release_version?: string;
-  num_resources?: number;
-  total_hours_available?: number;
+  dependencies: string[];
+  milestone?: boolean;
+  assignees?: string[];
+  priority?: 'High' | 'Medium' | 'Low';
 }
 
 export interface Project {
   id: string;
   name: string;
-  description: string;
-  created_date: string;
-  last_modified: string;
-  status: 'active' | 'completed' | 'archived';
-  tasks?: Task[];
-  customFields?: CustomField[];
-  team_members: string[];
-  created_by: string;
+  startDate: string;
+  endDate: string;
+  tasks: Task[];
+}
+
+export interface Resource {
+    id: string;
+    name: string;
+    type: 'Human' | 'Equipment' | 'Material';
+    availability: number; // e.g., hours per week or quantity
+    cost: number; // e.g., per hour or per unit
+}
+
+export interface BudgetItem {
+    id: string;
+    name: string;
+    type: 'Income' | 'Expense';
+    amount: number;
+    date: string;
+}
+
+export interface Integration {
+    id: string;
+    platform: 'Jira' | 'Asana' | 'Trello' | 'Slack';
+    apiKey: string;
+    projectUrl: string;
+}
+
+export interface CustomField {
+    id: string;
+    name: string;
+    type: 'Text' | 'Number' | 'Date' | 'Boolean';
+    value: any;
+}
+
+export interface CapacityData {
+  id: string;
+  team_member: string;
+  days_worked: number;
+  man_hours: number;
+  capacity_80_percent: number;
+  total_team_capacity?: number;
+  estimated_usage?: number;
+  remaining_capacity?: number;
+  created_at?: string;
+  updated_at?: string;
 }
