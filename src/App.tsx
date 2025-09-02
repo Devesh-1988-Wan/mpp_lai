@@ -3,13 +3,14 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
-import Index from "./pages/Index";
-import Projects from "./pages/Projects";
-import ProjectDetail from "./pages/ProjectDetail";
-import NotFound from "./pages/NotFound";
-import { AdminUserManagement } from "./pages/AdminUserManagement";
-import { Auth } from "./pages/Auth";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import Index from "@/pages/Index";
+import Projects from "@/pages/Projects";
+import ProjectDetail from "@/pages/ProjectDetail";
+import NotFound from "@/pages/NotFound";
+import AdminUserManagement from "@/pages/AdminUserManagement";
+import Auth from "@/pages/Auth";
+import CapacitySummary from "@/pages/Capacity/CapacitySummary";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +36,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <ProjectDetail />
+                  </ProtectedRoute>
+                }
+              />
+               <Route
+                path="/capacity"
+                element={
+                  <ProtectedRoute>
+                    <CapacitySummary />
                   </ProtectedRoute>
                 }
               />
