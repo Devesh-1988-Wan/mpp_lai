@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
-import { Button } from '../../components/ui/button';
-import { getCapacityData, addCapacityData, updateCapacityData, deleteCapacityData } from '../../services/capacityService';
-import { CapacityData } from '../../types/project';
-import CapacityForm from '../../components/CapacityForm';
-import { useToast } from '../../hooks/use-toast';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { getCapacityData, addCapacityData, updateCapacityData, deleteCapacityData } from '@/services/capacityService';
+import { CapacityData } from '@/types/project';
+import CapacityForm from '@/components/CapacityForm';
+import { useToast } from '@/hooks/use-toast';
 
 
 const CapacitySummary: React.FC = () => {
